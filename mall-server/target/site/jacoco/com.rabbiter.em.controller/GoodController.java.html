@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GoodController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">mall-server</a> &gt; <a href="index.source.html" class="el_package">com.rabbiter.em.controller</a> &gt; <span class="el_source">GoodController.java</span></div><h1>GoodController.java</h1><pre class="source lang-java linenums">package com.rabbiter.em.controller;
+
+import com.rabbiter.em.annotation.Authority;
+import com.rabbiter.em.constants.Constants;
+import com.rabbiter.em.common.Result;
+import com.rabbiter.em.entity.AuthorityType;
+import com.rabbiter.em.entity.Good;
+import com.rabbiter.em.entity.Standard;
+import com.rabbiter.em.service.GoodService;
+import com.rabbiter.em.service.StandardService;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
+import java.util.List;
+
+@RestController
+@RequestMapping(&quot;/api/good&quot;)
+<span class="fc" id="L18">public class GoodController {</span>
+    @Resource
+    private GoodService goodService;
+
+    @Resource
+    private StandardService standardService;
+
+    @Resource
+    private com.rabbiter.em.service.RecommendationService recommendationService;
+
+    /**
+     * 获取推荐商品接口 (Get Recommendations)
+     * @param userId 用户ID
+     * @return Result 推荐商品列表
+     */
+    @Authority(AuthorityType.noRequire)
+    @GetMapping(&quot;/recommend/{userId}&quot;)
+    public Result recommend(@PathVariable Long userId) {
+<span class="fc" id="L36">        return Result.success(recommendationService.recommend(userId));</span>
+    }
+
+    /**
+     * 新增商品接口 (Add Good)
+     * 需要管理员权限
+     * @param good 商品实体
+     * @return Result 保存成功的商品ID
+     */
+    @Authority(AuthorityType.requireAuthority)
+    @PostMapping
+    public Result save(@RequestBody Good good) {
+<span class="nc" id="L48">        return Result.success(goodService.saveOrUpdateGood(good));</span>
+    }
+
+    /**
+     * 更新商品接口 (Update Good)
+     * 需要管理员权限
+     * @param good 商品实体
+     * @return Result 操作结果
+     */
+    @Authority(AuthorityType.requireAuthority)
+    @PutMapping
+    public Result update(@RequestBody Good good) {
+<span class="nc" id="L60">        goodService.update(good);</span>
+<span class="nc" id="L61">        return Result.success();</span>
+    }
+
+    /**
+     * 删除商品接口 (Delete Good)
+     * 需要管理员权限
+     * @param id 商品ID
+     * @return Result 操作结果
+     */
+    @Authority(AuthorityType.requireAuthority)
+    @DeleteMapping(&quot;/delete/{id}&quot;)
+    public Result delete(@PathVariable Long id) {
+<span class="nc" id="L73">        goodService.deleteGood(id);</span>
+<span class="nc" id="L74">        return Result.success();</span>
+    }
+
+    /**
+     * 根据ID获取商品详情接口 (Get Good By ID)
+     * @param id 商品ID
+     * @return Result 商品详情
+     */
+    @Authority(AuthorityType.noRequire)
+    @GetMapping(&quot;/detail/{id}&quot;)
+    public Result findById(@PathVariable Long id) {
+<span class="nc" id="L85">        return Result.success(goodService.getGoodById(id));</span>
+    }
+
+    /**
+     * 获取商品规格信息接口 (Get Good Standards)
+     * @param id 商品ID
+     * @return Result 规格列表
+     */
+    @Authority(AuthorityType.noRequire)
+    @GetMapping(&quot;/standard/{id}&quot;)
+    public Result getStandard(@PathVariable int id) {
+<span class="nc" id="L96">        return Result.success(goodService.getStandard(id));</span>
+    }
+
+    /**
+     * 查询所有前台展示商品接口 (Find All Front Goods)
+     * @return Result 推荐商品列表
+     */
+    @Authority(AuthorityType.noRequire)
+    @GetMapping
+    public Result findAll() {
+<span class="fc" id="L106">        return Result.success(goodService.findFrontGoods());</span>
+    }
+
+    /**
+     * 查询商品销量排行接口 (Get Sales Rank)
+     * @param num 排行榜数量
+     * @return Result 销量排行列表
+     */
+    @Authority(AuthorityType.noRequire)
+    @GetMapping(&quot;/rank&quot;)
+    public Result getSaleRank(@RequestParam int num){
+<span class="nc" id="L117">        return Result.success(goodService.getSaleRank(num));</span>
+    }
+
+    /**
+     * 保存/更新商品规格接口 (Save Standards)
+     * @param standards 规格列表
+     * @param goodId 商品ID
+     * @return Result 操作结果
+     */
+    @Authority(AuthorityType.requireAuthority)
+    @PostMapping(&quot;/standard&quot;)
+    public Result saveStandard(@RequestBody List&lt;Standard&gt; standards, @RequestParam int goodId) {
+        // 先删除全部旧记录
+<span class="nc" id="L130">        standardService.deleteAll(goodId);</span>
+        // 然后插入新记录
+<span class="nc bnc" id="L132" title="All 2 branches missed.">        for (Standard standard : standards) {</span>
+<span class="nc" id="L133">            standard.setGoodId(goodId);</span>
+<span class="nc bnc" id="L134" title="All 2 branches missed.">            if(!standardService.save(standard)){</span>
+<span class="nc" id="L135">                return Result.error(Constants.CODE_500,&quot;保存失败&quot;);</span>
+            }
+        }
+<span class="nc" id="L138">        return Result.success();</span>
+    }
+
+    /**
+     * 删除商品规格接口 (Delete Standard)
+     * 需要管理员权限
+     * @param standard 规格对象
+     * @return Result 操作结果
+     */
+    @Authority(AuthorityType.requireAuthority)
+    @DeleteMapping(&quot;/standard&quot;)
+    public Result delStandard(@RequestBody Standard standard) {
+<span class="nc" id="L150">        boolean delete = standardService.delete(standard);</span>
+<span class="nc bnc" id="L151" title="All 2 branches missed.">        if(delete) {</span>
+<span class="nc" id="L152">            return Result.success();</span>
+        }else {
+<span class="nc" id="L154">            return Result.error(Constants.CODE_500,&quot;删除失败&quot;);</span>
+        }
+    }
+
+    /**
+     * 修改商品推荐状态接口 (Set Recommend Status)
+     * 需要管理员权限
+     * @param id 商品ID
+     * @param isRecommend 是否推荐
+     * @return Result 操作结果
+     */
+    @Authority(AuthorityType.requireAuthority)
+    @GetMapping(&quot;/recommend&quot;)
+    public Result setRecommend(@RequestParam Long id,@RequestParam Boolean isRecommend){
+<span class="nc" id="L168">        return Result.success(goodService.setRecommend(id,isRecommend));</span>
+    }
+
+    /**
+     * 分页查询商品接口 (Page Query Goods)
+     * @param pageNum 页码
+     * @param pageSize 每页数量
+     * @param searchText 搜索内容
+     * @param categoryId 分类ID
+     * @return Result 分页结果
+     */
+    @Authority(AuthorityType.noRequire)
+    @GetMapping(&quot;/page&quot;)
+    public Result findPage(
+                            @RequestParam(required = false, defaultValue = &quot;1&quot;) Integer pageNum,
+                            @RequestParam(required = false, defaultValue = &quot;10&quot;) Integer pageSize,
+                            @RequestParam(required = false, defaultValue = &quot;&quot;) String searchText,
+                            @RequestParam(required = false) Integer categoryId) {
+
+<span class="nc" id="L187">        return Result.success(goodService.findPage(pageNum,pageSize,searchText,categoryId));</span>
+    }
+
+    /**
+     * 分页查询完整商品信息接口 (Full Page Query)
+     * @param pageNum 页码
+     * @param pageSize 每页数量
+     * @param searchText 搜索内容
+     * @param categoryId 分类ID
+     * @return Result 分页结果
+     */
+    @Authority(AuthorityType.noRequire)
+    @GetMapping(&quot;/fullPage&quot;)
+    public Result findFullPage(
+            @RequestParam(required = false, defaultValue = &quot;1&quot;) Integer pageNum,
+            @RequestParam(required = false, defaultValue = &quot;10&quot;) Integer pageSize,
+            @RequestParam(required = false, defaultValue = &quot;&quot;) String searchText,
+            @RequestParam(required = false) Integer categoryId) {
+
+<span class="nc" id="L206">        return Result.success(goodService.findFullPage(pageNum,pageSize,searchText,categoryId));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

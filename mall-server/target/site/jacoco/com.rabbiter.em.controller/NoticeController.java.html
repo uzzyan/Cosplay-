@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NoticeController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">mall-server</a> &gt; <a href="index.source.html" class="el_package">com.rabbiter.em.controller</a> &gt; <span class="el_source">NoticeController.java</span></div><h1>NoticeController.java</h1><pre class="source lang-java linenums">package com.rabbiter.em.controller;
+
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.rabbiter.em.annotation.Authority;
+import com.rabbiter.em.common.Result;
+import com.rabbiter.em.entity.AuthorityType;
+import com.rabbiter.em.entity.Notice;
+import com.rabbiter.em.service.NoticeService;
+import org.springframework.web.bind.annotation.*;
+import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+@RestController
+@RequestMapping(&quot;/api/notice&quot;)
+<span class="fc" id="L17">public class NoticeController {</span>
+
+    @Resource
+    private NoticeService noticeService;
+
+    @Authority(AuthorityType.noRequire)
+    @GetMapping
+    public Result findAll() {
+<span class="nc" id="L25">        return Result.success(noticeService.list(new QueryWrapper&lt;Notice&gt;().orderByDesc(&quot;create_time&quot;)));</span>
+    }
+
+    @Authority(AuthorityType.noRequire)
+    @GetMapping(&quot;/page&quot;)
+    public Result findPage(@RequestParam Integer pageNum, @RequestParam Integer pageSize, @RequestParam(defaultValue = &quot;&quot;) String title) {
+<span class="nc" id="L31">        QueryWrapper&lt;Notice&gt; queryWrapper = new QueryWrapper&lt;&gt;();</span>
+<span class="nc bnc" id="L32" title="All 2 branches missed.">        if (!&quot;&quot;.equals(title)) {</span>
+<span class="nc" id="L33">            queryWrapper.like(&quot;title&quot;, title);</span>
+        }
+<span class="nc" id="L35">        queryWrapper.orderByDesc(&quot;create_time&quot;);</span>
+<span class="nc" id="L36">        return Result.success(noticeService.page(new Page&lt;&gt;(pageNum, pageSize), queryWrapper));</span>
+    }
+
+    @PostMapping
+    public Result save(@RequestBody Notice notice) {
+<span class="nc bnc" id="L41" title="All 2 branches missed.">        if (notice.getId() == null) {</span>
+<span class="nc" id="L42">            notice.setCreateTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern(&quot;yyyy-MM-dd HH:mm:ss&quot;)));</span>
+        }
+<span class="nc" id="L44">        noticeService.saveOrUpdate(notice);</span>
+<span class="nc" id="L45">        return Result.success();</span>
+    }
+
+    @DeleteMapping(&quot;/{id}&quot;)
+    public Result delete(@PathVariable Long id) {
+<span class="nc" id="L50">        noticeService.removeById(id);</span>
+<span class="nc" id="L51">        return Result.success();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

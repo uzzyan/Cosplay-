@@ -1,0 +1,1 @@
+mysql -u root -p123456 -P 3306 -D s003 -e "ALTER TABLE t_order ADD COLUMN return_state varchar(50);"

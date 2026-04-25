@@ -1,0 +1,136 @@
+{
+    "apifoxProject": "1.0",
+    "info": {
+        "name": "Cosplay Mall 核心业务接口测试",
+        "description": "包含登录、商品查询、购物车、订单流程，已配置登录自动提取 Token。"
+    },
+    "apiCollection": [
+        {
+            "name": "1. 用户认证",
+            "items": [
+                {
+                    "name": "登录 (获取 Token)",
+                    "api": {
+                        "method": "POST",
+                        "path": "/login",
+                        "parameters": {
+                            "body": {
+                                "type": "json",
+                                "json": "{\n  \"username\": \"admin\",\n  \"password\": \"admin\"\n}"
+                            }
+                        },
+                        "commonScripts": {
+                            "postAction": "var jsonData = pm.response.json();\nif (jsonData.code === '200' && jsonData.data && jsonData.data.token) {\n    pm.environment.set('token', jsonData.data.token);\n    pm.environment.set('currentUserId', jsonData.data.id);\n    console.log('Token 提取成功: ' + jsonData.data.token);\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "获取当前用户ID",
+                    "api": {
+                        "method": "GET",
+                        "path": "/userid",
+                        "parameters": {
+                            "header": [
+                                {
+                                    "name": "token",
+                                    "value": "{{token}}",
+                                    "required": true
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "2. 商品模块",
+            "items": [
+                {
+                    "name": "分页查询商品",
+                    "api": {
+                        "method": "GET",
+                        "path": "/api/good/page",
+                        "parameters": {
+                            "query": [
+                                { "name": "pageNum", "value": "1" },
+                                { "name": "pageSize", "value": "10" }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "获取分类列表",
+                    "api": {
+                        "method": "GET",
+                        "path": "/api/category"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "3. 购物车与订单",
+            "items": [
+                {
+                    "name": "加入购物车",
+                    "api": {
+                        "method": "POST",
+                        "path": "/api/cart",
+                        "parameters": {
+                            "header": [
+                                { "name": "token", "value": "{{token}}", "required": true }
+                            ],
+                            "body": {
+                                "type": "json",
+                                "json": "{\n  \"goodId\": 1,\n  \"count\": 1,\n  \"standard\": \"L\"\n}"
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "查询我的购物车",
+                    "api": {
+                        "method": "GET",
+                        "path": "/api/cart/userid/{{currentUserId}}",
+                        "parameters": {
+                            "header": [
+                                { "name": "token", "value": "{{token}}", "required": true }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "提交订单",
+                    "api": {
+                        "method": "POST",
+                        "path": "/api/order",
+                        "parameters": {
+                            "header": [
+                                { "name": "token", "value": "{{token}}", "required": true }
+                            ],
+                            "body": {
+                                "type": "json",
+                                "json": "{\n  \"userId\": {{currentUserId}},\n  \"addressId\": 1,\n  \"totalPrice\": 100\n}"
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "我的订单列表",
+                    "api": {
+                        "method": "GET",
+                        "path": "/api/order/page/mine",
+                        "parameters": {
+                            "header": [
+                                { "name": "token", "value": "{{token}}", "required": true }
+                            ],
+                            "query": [
+                                { "name": "pageNum", "value": "1" },
+                                { "name": "pageSize", "value": "10" }
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

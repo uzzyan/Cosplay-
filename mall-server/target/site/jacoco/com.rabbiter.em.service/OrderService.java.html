@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OrderService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">mall-server</a> &gt; <a href="index.source.html" class="el_package">com.rabbiter.em.service</a> &gt; <span class="el_source">OrderService.java</span></div><h1>OrderService.java</h1><pre class="source lang-java linenums">package com.rabbiter.em.service;
+
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.util.RandomUtil;
+import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.rabbiter.em.constants.Constants;
+import com.rabbiter.em.entity.Good;
+import com.rabbiter.em.entity.Order;
+import com.rabbiter.em.entity.OrderGoods;
+import com.rabbiter.em.entity.OrderItem;
+import com.rabbiter.em.exception.ServiceException;
+import com.rabbiter.em.mapper.GoodMapper;
+import com.rabbiter.em.mapper.OrderGoodsMapper;
+import com.rabbiter.em.mapper.OrderMapper;
+import com.rabbiter.em.mapper.StandardMapper;
+import com.rabbiter.em.utils.TokenUtils;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
+
+import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+import static com.rabbiter.em.constants.RedisConstants.GOOD_TOKEN_KEY;
+
+@Service
+<span class="fc" id="L35">public class OrderService extends ServiceImpl&lt;OrderMapper, Order&gt; {</span>
+
+    @Resource
+    private OrderMapper orderMapper;
+    @Resource
+    private OrderGoodsMapper orderGoodsMapper;
+    @Resource
+    private StandardMapper standardMapper;
+    @Resource
+    private GoodMapper goodMapper;
+    @Resource
+    private CartService cartService;
+    @Resource
+    private RedisTemplate&lt;String, Good&gt; redisTemplate;
+
+    /**
+     * 保存订单信息 (Save Order)
+     * 功能描述：接收前端传来的订单对象，生成订单号，插入数据库，并处理订单关联的商品信息，最后清除购物车。
+     * @param order 订单实体对象 (Order entity)，包含商品列表JSON字符串和购物车ID。
+     * @return String 生成的订单号 (Order Number)。
+     * @exception ServiceException 可能抛出数据库插入失败异常。
+     * @example orderService.saveOrder(new Order(...));
+     */
+    @Transactional
+    public String saveOrder(Order order) {
+        // 设置下单用户ID
+<span class="fc" id="L61">        order.setUserId(TokenUtils.getCurrentUser().getId());</span>
+        // 生成唯一订单号：日期时间 + 6位随机数
+<span class="fc" id="L63">        String orderNo = DateUtil.format(new Date(), &quot;yyyyMMddHHmmss&quot;) + RandomUtil.randomNumbers(6);</span>
+<span class="fc" id="L64">        order.setOrderNo(orderNo);</span>
+        // 设置创建时间
+<span class="fc" id="L66">        order.setCreateTime(DateUtil.now());</span>
+        // 插入订单主表
+<span class="fc" id="L68">        orderMapper.insert(order);</span>
+
+<span class="fc" id="L70">        OrderGoods orderGoods = new OrderGoods();</span>
+<span class="fc" id="L71">        orderGoods.setOrderId(order.getId());</span>
+        // 遍历解析order里携带的goods数组，并用orderItem对象来接收
+<span class="fc" id="L73">        String goods = order.getGoods();</span>
+<span class="fc" id="L74">        List&lt;OrderItem&gt; orderItems = JSON.parseArray(goods, OrderItem.class);</span>
+<span class="fc bfc" id="L75" title="All 2 branches covered.">        for (OrderItem orderItem : orderItems) {</span>
+<span class="fc" id="L76">            long good_id = orderItem.getId();</span>
+<span class="fc" id="L77">            String standard = orderItem.getStandard();</span>
+<span class="fc" id="L78">            int num = orderItem.getNum();</span>
+<span class="fc" id="L79">            orderGoods.setGoodId(good_id);</span>
+<span class="fc" id="L80">            orderGoods.setCount(num);</span>
+<span class="fc" id="L81">            orderGoods.setStandard(standard);</span>
+            // 插入到订单商品关联表 (order_goods)
+<span class="fc" id="L83">            orderGoodsMapper.insert(orderGoods);</span>
+        }
+        // 支付成功/下单后清除对应购物车项
+<span class="fc" id="L86">        cartService.removeById(order.getCartId());</span>
+<span class="fc" id="L87">        return orderNo;</span>
+    }
+
+    /**
+     * 订单付款处理 (Pay Order)
+     * 功能描述：修改订单状态为已支付，扣减商品库存，增加商品销量和销售额，同步更新Redis缓存。
+     * @param orderNo 订单编号 (Order Number)。
+     * @exception ServiceException 当库存不足、商品ID非法或不存在时抛出。
+     */
+    @Transactional
+    public void payOrder(String orderNo) {
+        // 1. 更改数据库订单状态为已支付
+<span class="fc" id="L99">        orderMapper.payOrder(orderNo);</span>
+        
+        // 2. 获取订单详情用于库存和销量处理
+<span class="fc" id="L102">        Map&lt;String, Object&gt; orderMap = orderMapper.selectByOrderNo(orderNo);</span>
+<span class="fc" id="L103">        int count = (int) orderMap.get(&quot;count&quot;);</span>
+<span class="fc" id="L104">        Object goodIdObj = orderMap.get(&quot;goodId&quot;);</span>
+<span class="fc" id="L105">        Long goodId = null;</span>
+        
+        // ID 类型转换与校验
+<span class="pc bpc" id="L108" title="1 of 2 branches missed.">        if(goodIdObj instanceof Long) {</span>
+<span class="fc" id="L109">            goodId = (Long) goodIdObj;</span>
+<span class="pc bnc" id="L110" title="All 2 branches missed.">        } else if(goodIdObj != null) {</span>
+            try {
+<span class="nc" id="L112">                goodId = Long.parseLong(goodIdObj.toString());</span>
+<span class="nc" id="L113">            } catch (NumberFormatException e) {</span>
+<span class="nc" id="L114">                throw new ServiceException(Constants.CODE_500, &quot;商品ID不正确&quot;);</span>
+            }
+        }
+
+<span class="pc bpc" id="L118" title="1 of 2 branches missed.">        if(goodId == null) {</span>
+<span class="nc" id="L119">            throw new ServiceException(Constants.CODE_500, &quot;商品ID不存在&quot;);</span>
+        }
+<span class="fc" id="L121">        Good dbGood = goodMapper.selectById(goodId);</span>
+<span class="pc bpc" id="L122" title="4 of 8 branches missed.">        if (dbGood == null || Boolean.TRUE.equals(dbGood.getIsDelete()) || (dbGood.getStatus() != null &amp;&amp; dbGood.getStatus() == 0)) {</span>
+<span class="nc" id="L123">            throw new ServiceException(Constants.CODE_500, &quot;商品已下架&quot;);</span>
+        }
+        
+<span class="fc" id="L126">        String standard = (String) orderMap.get(&quot;standard&quot;);</span>
+        
+        // 3. 校验并扣减库存 (Deduct Stock)
+<span class="fc" id="L129">        int rows = standardMapper.deductStore(goodId, standard, count);</span>
+<span class="pc bpc" id="L130" title="1 of 2 branches missed.">        if (rows == 0) {</span>
+<span class="nc" id="L131">            throw new ServiceException(Constants.CODE_500, &quot;库存不足&quot;);</span>
+        }
+
+        // 4. 增加商品销量和销售额 (Update Sales)
+<span class="fc" id="L135">        LambdaQueryWrapper&lt;Order&gt; orderLambdaQueryWrapper = new LambdaQueryWrapper&lt;&gt;();</span>
+<span class="fc" id="L136">        orderLambdaQueryWrapper.eq(Order::getOrderNo, orderNo);</span>
+<span class="fc" id="L137">        Order one = getOne(orderLambdaQueryWrapper);</span>
+<span class="fc" id="L138">        BigDecimal totalPrice = one.getTotalPrice();</span>
+<span class="fc" id="L139">        goodMapper.saleGood(goodId, count, totalPrice);</span>
+
+        // 5. 同步更新 Redis 缓存中的销量数据
+<span class="fc" id="L142">        String redisKey = GOOD_TOKEN_KEY + goodId;</span>
+<span class="fc" id="L143">        ValueOperations&lt;String, Good&gt; valueOperations = redisTemplate.opsForValue();</span>
+<span class="fc" id="L144">        Good good = valueOperations.get(redisKey);</span>
+<span class="pc bpc" id="L145" title="1 of 2 branches missed.">        if(!ObjectUtils.isEmpty(good)) {</span>
+<span class="nc" id="L146">            good.setSales(good.getSales() + count);</span>
+<span class="nc" id="L147">            valueOperations.set(redisKey, good);</span>
+        }
+<span class="fc" id="L149">    }</span>
+
+    public List&lt;Map&lt;String, Object&gt;&gt; selectByUserId(int userId) {
+<span class="nc" id="L152">        return orderMapper.selectByUserId(userId);</span>
+    }
+
+    public Map&lt;String, Object&gt; selectByOrderNo(String orderNo) {
+<span class="nc" id="L156">        return orderMapper.selectByOrderNo(orderNo);</span>
+    }
+
+    public List&lt;Map&lt;String, Object&gt;&gt; export(String orderNo, String state) {
+<span class="nc" id="L160">        return orderMapper.selectExport(orderNo, state);</span>
+    }
+
+    /**
+     * 确认收货 (Receive Order)
+     * @param orderNo 订单编号
+     * @return boolean 是否成功
+     */
+    public boolean receiveOrder(String orderNo) {
+<span class="fc" id="L169">        return orderMapper.receiveOrder(orderNo);</span>
+    }
+
+    /**
+     * 订单发货 (Delivery)
+     * @param orderNo 订单编号
+     */
+    public void delivery(String orderNo) {
+<span class="nc" id="L177">        LambdaUpdateWrapper&lt;Order&gt; orderLambdaUpdateWrapper = new LambdaUpdateWrapper&lt;&gt;();</span>
+<span class="nc" id="L178">        orderLambdaUpdateWrapper.eq(Order::getOrderNo, orderNo)</span>
+<span class="nc" id="L179">                .set(Order::getState, &quot;已发货&quot;);</span>
+<span class="nc" id="L180">        update(orderLambdaUpdateWrapper);</span>
+<span class="nc" id="L181">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

@@ -1,0 +1,483 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Cosplay Mall OpenAPI 3.0 测试集",
+    "description": "基于 Swagger 2.0 自动生成的 Apifox 优化版接口文档，包含所有控制器的代表性接口，预设 Token 提取和变量引用。",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:9191",
+      "description": "本地开发环境"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "token"
+      }
+    }
+  },
+  "paths": {
+    "/login": {
+      "post": {
+        "tags": ["user-controller"],
+        "summary": "用户登录 (提取 Token)",
+        "description": "登录成功后自动提取 token 到环境变量",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": { "type": "string", "example": "admin" },
+                  "password": { "type": "string", "example": "admin" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "OK" }
+        },
+        "x-apifox-post-processors": [
+          {
+            "type": "json-extract",
+            "jsonPath": "$.data.token",
+            "variableName": "token"
+          },
+          {
+            "type": "json-extract",
+            "jsonPath": "$.data.id",
+            "variableName": "currentUserId"
+          }
+        ]
+      }
+    },
+    "/userid": {
+      "get": {
+        "tags": ["user-controller"],
+        "summary": "获取当前登录用户ID",
+        "parameters": [
+          { "name": "token", "in": "header", "required": true, "schema": { "type": "string", "default": "{{token}}" } }
+        ],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/address/{userId}": {
+      "get": {
+        "tags": ["address-controller"],
+        "summary": "根据用户ID查询收货地址",
+        "parameters": [
+          { "name": "userId", "in": "path", "required": true, "schema": { "type": "integer", "default": "{{currentUserId}}" } },
+          { "name": "token", "in": "header", "required": true, "schema": { "type": "string", "default": "{{token}}" } }
+        ],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/address": {
+      "post": {
+        "tags": ["address-controller"],
+        "summary": "新增收货地址",
+        "parameters": [
+          { "name": "token", "in": "header", "required": true, "schema": { "type": "string", "default": "{{token}}" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": { "type": "integer", "example": "{{currentUserId}}" },
+                  "linkUser": { "type": "string", "example": "测试员" },
+                  "linkPhone": { "type": "string", "example": "13800138000" },
+                  "address": { "type": "string", "example": "上海市浦东新区" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/afterSale/mine/page": {
+      "get": {
+        "tags": ["after-sale-controller"],
+        "summary": "查询我的售后单分页",
+        "parameters": [
+          { "name": "pageNum", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "pageSize", "in": "query", "schema": { "type": "integer", "default": 10 } },
+          { "name": "token", "in": "header", "required": true, "schema": { "type": "string", "default": "{{token}}" } }
+        ],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/afterSale": {
+      "post": {
+        "tags": ["after-sale-controller"],
+        "summary": "申请售后",
+        "parameters": [
+          { "name": "token", "in": "header", "required": true, "schema": { "type": "string", "default": "{{token}}" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "orderNo": { "type": "string", "example": "ORDER123" },
+                  "reason": { "type": "string", "example": "商品破损" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/carousel": {
+      "get": {
+        "tags": ["carousel-controller"],
+        "summary": "获取所有轮播图",
+        "responses": { "200": { "description": "OK" } }
+      },
+      "post": {
+        "tags": ["carousel-controller"],
+        "summary": "新增轮播图",
+        "parameters": [
+          { "name": "token", "in": "header", "required": true, "schema": { "type": "string", "default": "{{token}}" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "img": { "type": "string", "example": "http://example.com/banner.jpg" },
+                  "href": { "type": "string", "example": "/detail/1" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/cart/userid/{userId}": {
+      "get": {
+        "tags": ["cart-controller"],
+        "summary": "查询我的购物车",
+        "parameters": [
+          { "name": "userId", "in": "path", "required": true, "schema": { "type": "integer", "default": "{{currentUserId}}" } },
+          { "name": "token", "in": "header", "required": true, "schema": { "type": "string", "default": "{{token}}" } }
+        ],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/cart": {
+      "post": {
+        "tags": ["cart-controller"],
+        "summary": "加入购物车",
+        "parameters": [
+          { "name": "token", "in": "header", "required": true, "schema": { "type": "string", "default": "{{token}}" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "goodId": { "type": "integer", "example": 1 },
+                  "count": { "type": "integer", "example": 1 },
+                  "standard": { "type": "string", "example": "L" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/category": {
+      "get": {
+        "tags": ["category-controller"],
+        "summary": "获取全部分类树",
+        "responses": { "200": { "description": "OK" } }
+      },
+      "post": {
+        "tags": ["category-controller"],
+        "summary": "新增分类",
+        "parameters": [
+          { "name": "token", "in": "header", "required": true, "schema": { "type": "string", "default": "{{token}}" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string", "example": "新款服装" },
+                  "parentId": { "type": "integer", "example": 0 }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/comment/good/{goodId}": {
+      "get": {
+        "tags": ["comment-controller"],
+        "summary": "查询商品评价列表",
+        "parameters": [
+          { "name": "goodId", "in": "path", "required": true, "schema": { "type": "integer", "example": 1 } }
+        ],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/comment": {
+      "post": {
+        "tags": ["comment-controller"],
+        "summary": "发表评价",
+        "parameters": [
+          { "name": "token", "in": "header", "required": true, "schema": { "type": "string", "default": "{{token}}" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "goodId": { "type": "integer", "example": 1 },
+                  "content": { "type": "string", "example": "质量很好！" },
+                  "star": { "type": "integer", "example": 5 }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/file/page": {
+      "get": {
+        "tags": ["file-controller"],
+        "summary": "文件列表分页查询 (管理员)",
+        "parameters": [
+          { "name": "pageNum", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "pageSize", "in": "query", "schema": { "type": "integer", "default": 10 } },
+          { "name": "token", "in": "header", "required": true, "schema": { "type": "string", "default": "{{token}}" } }
+        ],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/file/upload": {
+      "post": {
+        "tags": ["file-controller"],
+        "summary": "通用文件上传",
+        "parameters": [
+          { "name": "token", "in": "header", "required": true, "schema": { "type": "string", "default": "{{token}}" } }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/good/page": {
+      "get": {
+        "tags": ["good-controller"],
+        "summary": "商品列表分页查询",
+        "parameters": [
+          { "name": "pageNum", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "pageSize", "in": "query", "schema": { "type": "integer", "default": 10 } },
+          { "name": "searchText", "in": "query", "schema": { "type": "string", "example": "礼服" } }
+        ],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/good": {
+      "post": {
+        "tags": ["good-controller"],
+        "summary": "新增/保存商品",
+        "parameters": [
+          { "name": "token", "in": "header", "required": true, "schema": { "type": "string", "default": "{{token}}" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string", "example": "新品服装" },
+                  "price": { "type": "number", "example": 299.0 },
+                  "categoryId": { "type": "integer", "example": 1 },
+                  "imgs": { "type": "string", "example": "img_url" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/icon": {
+      "get": {
+        "tags": ["icon-controller"],
+        "summary": "获取全部图标",
+        "responses": { "200": { "description": "OK" } }
+      },
+      "post": {
+        "tags": ["icon-controller"],
+        "summary": "新增图标",
+        "parameters": [
+          { "name": "token", "in": "header", "required": true, "schema": { "type": "string", "default": "{{token}}" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string", "example": "home" },
+                  "value": { "type": "string", "example": "el-icon-home" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/income/chart": {
+      "get": {
+        "tags": ["income-controller"],
+        "summary": "获取收入统计图表数据",
+        "parameters": [
+          { "name": "token", "in": "header", "required": true, "schema": { "type": "string", "default": "{{token}}" } }
+        ],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/income/week": {
+      "get": {
+        "tags": ["income-controller"],
+        "summary": "获取本周收入统计",
+        "parameters": [
+          { "name": "token", "in": "header", "required": true, "schema": { "type": "string", "default": "{{token}}" } }
+        ],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/message/mine/page": {
+      "get": {
+        "tags": ["message-controller"],
+        "summary": "查询我的留言分页",
+        "parameters": [
+          { "name": "pageNum", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "pageSize", "in": "query", "schema": { "type": "integer", "default": 10 } },
+          { "name": "token", "in": "header", "required": true, "schema": { "type": "string", "default": "{{token}}" } }
+        ],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/message": {
+      "post": {
+        "tags": ["message-controller"],
+        "summary": "发表留言",
+        "parameters": [
+          { "name": "token", "in": "header", "required": true, "schema": { "type": "string", "default": "{{token}}" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "content": { "type": "string", "example": "请问什么时候发货？" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/notice": {
+      "get": {
+        "tags": ["notice-controller"],
+        "summary": "获取全部公告",
+        "responses": { "200": { "description": "OK" } }
+      },
+      "post": {
+        "tags": ["notice-controller"],
+        "summary": "发布公告 (管理员)",
+        "parameters": [
+          { "name": "token", "in": "header", "required": true, "schema": { "type": "string", "default": "{{token}}" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "string", "example": "五一放假通知" },
+                  "content": { "type": "string", "example": "正常营业" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/order/userid/{userid}": {
+      "get": {
+        "tags": ["order-controller"],
+        "summary": "查询我的订单分页",
+        "parameters": [
+          { "name": "pageNum", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "pageSize", "in": "query", "schema": { "type": "integer", "default": 10 } },
+          { "name": "token", "in": "header", "required": true, "schema": { "type": "string", "default": "{{token}}" } }
+        ],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/order": {
+      "post": {
+        "tags": ["order-controller"],
+        "summary": "提交订单",
+        "parameters": [
+          { "name": "token", "in": "header", "required": true, "schema": { "type": "string", "default": "{{token}}" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": { "type": "integer", "example": "{{currentUserId}}" },
+                  "addressId": { "type": "integer", "example": 1 },
+                  "totalPrice": { "type": "number", "example": 100.0 }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "OK" } }
+      }
+    }
+  }
+}

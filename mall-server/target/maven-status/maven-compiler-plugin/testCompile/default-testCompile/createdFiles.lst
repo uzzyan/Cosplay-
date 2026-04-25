@@ -1,0 +1,4 @@
+com\rabbiter\em\service\RecommendationServiceTest.class
+com\rabbiter\em\service\UserServiceTest.class
+com\rabbiter\em\service\OrderServiceTest.class
+com\rabbiter\em\controller\GoodControllerTest.class

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Address.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">mall-server</a> &gt; <a href="index.source.html" class="el_package">com.rabbiter.em.entity</a> &gt; <span class="el_source">Address.java</span></div><h1>Address.java</h1><pre class="source lang-java linenums">package com.rabbiter.em.entity;
+
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.extension.activerecord.Model;
+import com.baomidou.mybatisplus.annotation.TableId;
+
+@TableName(&quot;address&quot;)
+<span class="nc" id="L9">public class Address extends Model&lt;Address&gt; {</span>
+    /**
+      * 主键
+      */
+    @TableId(value = &quot;id&quot;, type = IdType.AUTO)
+    private Long id;
+
+    /**
+      * 联系人 
+      */
+    private String linkUser;
+
+    /**
+      * 联系地址 
+      */
+    private String linkAddress;
+
+    /**
+      * 联系电话 
+      */
+    private String linkPhone;
+
+    /**
+      * 所属用户 
+      */
+    private Long userId;
+
+    public Long getId() {
+<span class="nc" id="L37">        return id;</span>
+    }
+
+    public void setId(Long id) {
+<span class="nc" id="L41">        this.id = id;</span>
+<span class="nc" id="L42">    }</span>
+
+    public String getLinkUser() {
+<span class="nc" id="L45">        return linkUser;</span>
+    }
+
+    public void setLinkUser(String linkUser) {
+<span class="nc" id="L49">        this.linkUser = linkUser;</span>
+<span class="nc" id="L50">    }</span>
+
+    public String getLinkAddress() {
+<span class="nc" id="L53">        return linkAddress;</span>
+    }
+
+    public void setLinkAddress(String linkAddress) {
+<span class="nc" id="L57">        this.linkAddress = linkAddress;</span>
+<span class="nc" id="L58">    }</span>
+
+    public String getLinkPhone() {
+<span class="nc" id="L61">        return linkPhone;</span>
+    }
+
+    public void setLinkPhone(String linkPhone) {
+<span class="nc" id="L65">        this.linkPhone = linkPhone;</span>
+<span class="nc" id="L66">    }</span>
+
+    public Long getUserId() {
+<span class="nc" id="L69">        return userId;</span>
+    }
+
+    public void setUserId(Long userId) {
+<span class="nc" id="L73">        this.userId = userId;</span>
+<span class="nc" id="L74">    }</span>
+
+    @Override
+    public String toString() {
+<span class="nc" id="L78">        return &quot;Address{&quot; +</span>
+<span class="nc" id="L79">                &quot;id=&quot; + id +</span>
+<span class="nc" id="L80">                &quot;, linkUser='&quot; + linkUser + '\'' +</span>
+<span class="nc" id="L81">                &quot;, linkAddress='&quot; + linkAddress + '\'' +</span>
+<span class="nc" id="L82">                &quot;, linkPhone='&quot; + linkPhone + '\'' +</span>
+<span class="nc" id="L83">                &quot;, userId=&quot; + userId +</span>
+<span class="nc" id="L84">                '}';</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

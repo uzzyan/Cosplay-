@@ -1,0 +1,803 @@
+{
+  "info": {
+    "name": "Cosplay商城API",
+    "description": "Cosplay服装电商系统API接口",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01-用户认证",
+      "item": [
+        {
+          "name": "用户登录",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["login"]
+            },
+            "description": "用户登录获取Token"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"登录成功\", function () {",
+                  "    pm.expect(response.code).to.eql(\"200\");",
+                  "});",
+                  "",
+                  "if (response.code === \"200\") {",
+                  "    pm.environment.set(\"token\", response.data.token);",
+                  "    pm.environment.set(\"userId\", response.data.id);",
+                  "    ",
+                  "    if (response.data.role === \"admin\") {",
+                  "        pm.environment.set(\"adminToken\", response.data.token);",
+                  "    }",
+                  "    ",
+                  "    console.log(\"✅ Token已保存:\", response.data.token);",
+                  "    console.log(\"✅ 用户ID:\", response.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "用户注册",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser_{{$timestamp}}\",\n  \"password\": \"{{password}}\",\n  \"phone\": \"13800138000\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["register"]
+            },
+            "description": "新用户注册"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.test(\"注册成功\", function () {",
+                  "    pm.expect(response.code).to.eql(\"200\");",
+                  "});",
+                  "console.log(\"✅ 用户注册成功\");"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02-商品管理",
+      "item": [
+        {
+          "name": "商品列表（分页）",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "token",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/good/page?pageNum=1&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "good", "page"],
+              "query": [
+                {
+                  "key": "pageNum",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "分页查询商品列表"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test(\"获取商品列表成功\", function () {",
+                  "    pm.expect(response.code).to.eql(\"200\");",
+                  "    pm.expect(response.data).to.have.property(\"records\");",
+                  "    pm.expect(response.data).to.have.property(\"total\");",
+                  "});",
+                  "",
+                  "console.log(\"✅ 商品总数:\", response.data.total);",
+                  "console.log(\"✅ 当前页商品数:\", response.data.records.length);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "商品搜索",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "token",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/good/page?pageNum=1&pageSize=10&name=初音",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "good", "page"],
+              "query": [
+                {
+                  "key": "pageNum",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                },
+                {
+                  "key": "name",
+                  "value": "初音"
+                }
+              ]
+            },
+            "description": "关键词搜索商品"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.test(\"搜索成功\", function () {",
+                  "    pm.expect(response.code).to.eql(\"200\");",
+                  "});",
+                  "console.log(\"✅ 搜索结果:\", response.data.total, \"条\");"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "商品详情",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "token",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/good/detail/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "good", "detail", "1"]
+            },
+            "description": "查看商品详细信息"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.test(\"获取商品详情成功\", function () {",
+                  "    pm.expect(response.code).to.eql(\"200\");",
+                  "});",
+                  "console.log(\"✅ 商品名称:\", response.data.name);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "推荐商品",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "token",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/good/recommend/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "good", "recommend", "{{userId}}"]
+            },
+            "description": "获取个性化推荐商品"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.test(\"获取推荐商品成功\", function () {",
+                  "    pm.expect(response.code).to.eql(\"200\");",
+                  "});",
+                  "console.log(\"✅ 推荐商品数:\", response.data.length);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03-购物车",
+      "item": [
+        {
+          "name": "添加商品到购物车",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "token",
+                "value": "{{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"goodId\": 1,\n  \"count\": 2,\n  \"standard\": \"M码,蓝色\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cart"]
+            },
+            "description": "添加商品到购物车"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.test(\"添加到购物车成功\", function () {",
+                  "    pm.expect(response.code).to.eql(\"200\");",
+                  "});",
+                  "console.log(\"✅ 商品已添加到购物车\");"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "查看购物车",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "token",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart/userid/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cart", "userid", "{{userId}}"]
+            },
+            "description": "查询用户购物车"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.test(\"查看购物车成功\", function () {",
+                  "    pm.expect(response.code).to.eql(\"200\");",
+                  "});",
+                  "console.log(\"✅ 购物车商品数:\", response.data.length);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04-订单管理",
+      "item": [
+        {
+          "name": "创建订单",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "token",
+                "value": "{{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"totalPrice\": 199.98,\n  \"linkUser\": \"张三\",\n  \"linkPhone\": \"13800138000\",\n  \"linkAddress\": \"北京市朝阳区XXX街道\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/order",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "order"]
+            },
+            "description": "创建新订单"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.test(\"创建订单成功\", function () {",
+                  "    pm.expect(response.code).to.eql(\"200\");",
+                  "});",
+                  "if (response.code === \"200\") {",
+                  "    pm.environment.set(\"orderNo\", response.data);",
+                  "    console.log(\"✅ 订单号:\", response.data);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "查询我的订单",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "token",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/order/userid/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "order", "userid", "{{userId}}"]
+            },
+            "description": "查看用户订单列表"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.test(\"查询订单成功\", function () {",
+                  "    pm.expect(response.code).to.eql(\"200\");",
+                  "});",
+                  "console.log(\"✅ 订单总数:\", response.data.length);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "支付订单",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "token",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/order/paid/{{orderNo}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "order", "paid", "{{orderNo}}"]
+            },
+            "description": "模拟支付订单"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.test(\"支付成功\", function () {",
+                  "    pm.expect(response.code).to.eql(\"200\");",
+                  "});",
+                  "console.log(\"✅ 订单已支付\");"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "确认收货",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "token",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/order/receive/{{orderNo}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "order", "receive", "{{orderNo}}"]
+            },
+            "description": "确认收到商品"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.test(\"确认收货成功\", function () {",
+                  "    pm.expect(response.code).to.eql(\"200\");",
+                  "});",
+                  "console.log(\"✅ 已确认收货\");"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05-个人中心",
+      "item": [
+        {
+          "name": "获取用户信息",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "token",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/userinfo/{{username}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["userinfo", "{{username}}"]
+            },
+            "description": "查看用户详细信息"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.test(\"获取用户信息成功\", function () {",
+                  "    pm.expect(response.code).to.eql(\"200\");",
+                  "});",
+                  "console.log(\"✅ 用户名:\", response.data.username);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "更新用户信息",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "token",
+                "value": "{{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": {{userId}},\n  \"nickname\": \"新昵称\",\n  \"phone\": \"13900139000\",\n  \"email\": \"test@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user",
+              "host": ["{{baseUrl}}"],
+              "path": ["user"]
+            },
+            "description": "修改用户个人信息"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.test(\"更新用户信息成功\", function () {",
+                  "    pm.expect(response.code).to.eql(\"200\");",
+                  "});",
+                  "console.log(\"✅ 用户信息已更新\");"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06-管理员功能",
+      "item": [
+        {
+          "name": "用户管理（分页）",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "token",
+                "value": "{{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user/page?pageNum=1&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "page"],
+              "query": [
+                {
+                  "key": "pageNum",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "分页查询所有用户"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.test(\"查询用户列表成功\", function () {",
+                  "    pm.expect(response.code).to.eql(\"200\");",
+                  "});",
+                  "console.log(\"✅ 用户总数:\", response.data.total);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "新增商品",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "token",
+                "value": "{{adminToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"测试商品\",\n  \"description\": \"商品描述\",\n  \"discount\": 1.0,\n  \"categoryId\": 1,\n  \"recommend\": false,\n  \"status\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/good",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "good"]
+            },
+            "description": "管理员新增商品"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.test(\"新增商品成功\", function () {",
+                  "    pm.expect(response.code).to.eql(\"200\");",
+                  "});",
+                  "console.log(\"✅ 商品已添加\");"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "订单发货",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "token",
+                "value": "{{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/order/deliver/{{orderNo}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "order", "deliver", "{{orderNo}}"]
+            },
+            "description": "管理员发货"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.test(\"发货成功\", function () {",
+                  "    pm.expect(response.code).to.eql(\"200\");",
+                  "});",
+                  "console.log(\"✅ 订单已发货\");"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "收入统计",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "token",
+                "value": "{{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/income/chart",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "income", "chart"]
+            },
+            "description": "查看收入图表数据"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.test(\"获取收入统计成功\", function () {",
+                  "    pm.expect(response.code).to.eql(\"200\");",
+                  "});",
+                  "console.log(\"✅ 收入分类数:\", response.data.categoryIncomes.length);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "商品销量排行",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "token",
+                "value": "{{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/good/rank?num=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "good", "rank"],
+              "query": [
+                {
+                  "key": "num",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "查看商品销量排行"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.test(\"获取商品排行成功\", function () {",
+                  "    pm.expect(response.code).to.eql(\"200\");",
+                  "});",
+                  "console.log(\"✅ Top10商品已获取\");"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:9191",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "orderNo",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "username",
+      "value": "admin",
+      "type": "string"
+    },
+    {
+      "key": "password",
+      "value": "e10adc3949ba59abbe56e057f20f883e",
+      "type": "string"
+    }
+  ]
+}

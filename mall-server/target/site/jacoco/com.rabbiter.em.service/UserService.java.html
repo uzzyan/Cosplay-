@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">mall-server</a> &gt; <a href="index.source.html" class="el_package">com.rabbiter.em.service</a> &gt; <span class="el_source">UserService.java</span></div><h1>UserService.java</h1><pre class="source lang-java linenums">package com.rabbiter.em.service;
+
+import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.rabbiter.em.common.Result;
+import com.rabbiter.em.constants.Constants;
+import com.rabbiter.em.constants.RedisConstants;
+import com.rabbiter.em.entity.LoginForm;
+import com.rabbiter.em.entity.User;
+import com.rabbiter.em.entity.dto.UserDTO;
+import com.rabbiter.em.exception.ServiceException;
+import com.rabbiter.em.mapper.UserMapper;
+import com.rabbiter.em.utils.TokenUtils;
+import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
+
+import javax.annotation.Resource;
+import java.io.Serializable;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
+
+
+@Service
+<span class="fc" id="L28">public class UserService extends ServiceImpl&lt;UserMapper, User&gt; {</span>
+
+<span class="fc" id="L30">    private static final Pattern PASSWORD_PATTERN = Pattern.compile(</span>
+<span class="fc" id="L31">            &quot;^(?=.*[A-Za-z])(?=.*\\d)(?=.*[!@#$%^&amp;*()_+\\-=\\[\\]{}|;:,.&lt;&gt;?])[A-Za-z\\d!@#$%^&amp;*()_+\\-=\\[\\]{}|;:,.&lt;&gt;?]{6,12}$&quot;</span>
+    );
+
+    private void validatePassword(String password) {
+<span class="pc bpc" id="L35" title="1 of 4 branches missed.">        if (password == null || !PASSWORD_PATTERN.matcher(password).matches()) {</span>
+<span class="fc" id="L36">            throw new ServiceException(&quot;400&quot;, &quot;密码必须为6-12位，且同时包含字母、数字和特殊符号&quot;);</span>
+        }
+<span class="fc" id="L38">    }</span>
+    @Resource(name = &quot;userRedisTemplate&quot;)
+    RedisTemplate&lt;String,User&gt; redisTemplate;
+
+<span class="fc" id="L42">    private static final BCryptPasswordEncoder PASSWORD_ENCODER = new BCryptPasswordEncoder();</span>
+
+    public UserDTO login(LoginForm loginForm) {
+<span class="fc" id="L45">        QueryWrapper&lt;User&gt; queryWrapper = new QueryWrapper&lt;&gt;();</span>
+<span class="fc" id="L46">        queryWrapper.eq(&quot;username&quot;, loginForm.getUsername());</span>
+<span class="fc" id="L47">        User user = getOne(queryWrapper);</span>
+<span class="fc bfc" id="L48" title="All 2 branches covered.">        if (user == null) {</span>
+<span class="fc" id="L49">            throw new ServiceException(Constants.CODE_403, &quot;用户不存在&quot;);</span>
+        }
+<span class="fc" id="L51">        String rawPassword = loginForm.getPassword();</span>
+<span class="fc" id="L52">        String storedPassword = user.getPassword();</span>
+<span class="fc" id="L53">        boolean matched = false;</span>
+<span class="pc bpc" id="L54" title="2 of 4 branches missed.">        if (storedPassword.startsWith(&quot;$2a$&quot;) || storedPassword.startsWith(&quot;$2b$&quot;)) {</span>
+            // BCrypt 格式密码
+<span class="nc" id="L56">            matched = PASSWORD_ENCODER.matches(rawPassword, storedPassword);</span>
+<span class="nc" id="L57">        } else {</span>
+            // 旧 MD5 格式密码（前端传来的就是 MD5），直接比较
+<span class="fc" id="L59">            matched = storedPassword.equals(rawPassword);</span>
+<span class="pc bpc" id="L60" title="1 of 2 branches missed.">            if (matched) {</span>
+                // 透明升级：将旧 MD5 密码迁移为 BCrypt
+<span class="fc" id="L62">                user.setPassword(PASSWORD_ENCODER.encode(rawPassword));</span>
+<span class="fc" id="L63">                this.updateById(user);</span>
+            }
+        }
+<span class="pc bpc" id="L66" title="1 of 2 branches missed.">        if (!matched) {</span>
+<span class="nc" id="L67">            throw new ServiceException(Constants.CODE_403, &quot;用户名或密码错误&quot;);</span>
+        }
+<span class="fc" id="L69">        String token = TokenUtils.genToken(user.getId().toString(), user.getUsername());</span>
+<span class="fc" id="L70">        redisTemplate.opsForValue().set(RedisConstants.USER_TOKEN_KEY + token, user);</span>
+<span class="fc" id="L71">        redisTemplate.expire(RedisConstants.USER_TOKEN_KEY + token, RedisConstants.USER_TOKEN_TTL, TimeUnit.MINUTES);</span>
+<span class="fc" id="L72">        UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);</span>
+<span class="fc" id="L73">        userDTO.setToken(token);</span>
+<span class="fc" id="L74">        return userDTO;</span>
+    }
+
+    public User register(LoginForm loginForm) {
+<span class="fc" id="L78">        String username = loginForm.getUsername();</span>
+<span class="fc" id="L79">        String password = loginForm.getPassword();</span>
+<span class="fc" id="L80">        String phone = loginForm.getPhone();</span>
+
+<span class="pc bpc" id="L82" title="2 of 4 branches missed.">        if (username == null || username.trim().isEmpty()) {</span>
+<span class="nc" id="L83">            throw new ServiceException(&quot;400&quot;, &quot;用户名不能为空&quot;);</span>
+        }
+<span class="pc bpc" id="L85" title="2 of 4 branches missed.">        if (password == null || password.trim().isEmpty()) {</span>
+<span class="nc" id="L86">            throw new ServiceException(&quot;400&quot;, &quot;密码不能为空&quot;);</span>
+        }
+<span class="fc" id="L88">        validatePassword(password);</span>
+<span class="pc bpc" id="L89" title="2 of 4 branches missed.">        if (phone == null || phone.trim().isEmpty()) {</span>
+<span class="nc" id="L90">            throw new ServiceException(&quot;400&quot;, &quot;联系方式不能为空&quot;);</span>
+        }
+
+<span class="fc" id="L93">        QueryWrapper&lt;User&gt; queryWrapper = new QueryWrapper&lt;&gt;();</span>
+<span class="fc" id="L94">        queryWrapper.eq(&quot;username&quot;, username);</span>
+<span class="fc" id="L95">        User user = getOne(queryWrapper);</span>
+<span class="fc bfc" id="L96" title="All 2 branches covered.">        if (user != null) {</span>
+<span class="fc" id="L97">            throw new ServiceException(Constants.CODE_403, &quot;用户名已被使用&quot;);</span>
+        } else {
+<span class="fc" id="L99">            user = new User();</span>
+<span class="fc" id="L100">            BeanUtils.copyProperties(loginForm, user);</span>
+            // 服务端 BCrypt 加密（前端仍传 MD5，服务端再加密）
+<span class="fc" id="L102">            user.setPassword(PASSWORD_ENCODER.encode(password));</span>
+<span class="fc" id="L103">            user.setNickname(&quot;新用户&quot;);</span>
+<span class="fc" id="L104">            user.setRole(&quot;user&quot;);</span>
+<span class="fc" id="L105">            save(user);</span>
+<span class="fc" id="L106">            return user;</span>
+        }
+    }
+
+    public User getOne(String username) {
+<span class="nc" id="L111">        QueryWrapper&lt;User&gt; queryWrapper = new QueryWrapper&lt;&gt;();</span>
+<span class="nc" id="L112">        queryWrapper.eq(&quot;username&quot;, username);</span>
+<span class="nc" id="L113">        return getOne(queryWrapper);</span>
+    }
+
+    public Result saveUpdate(User user) {
+<span class="nc bnc" id="L117" title="All 2 branches missed.">        if (user.getId() != null) {</span>
+<span class="nc" id="L118">            User old = this.baseMapper.selectById(user.getId());</span>
+<span class="nc bnc" id="L119" title="All 2 branches missed.">            old.setNickname(ObjectUtils.isEmpty(user.getNickname()) ? old.getNickname() : user.getNickname());</span>
+<span class="nc bnc" id="L120" title="All 2 branches missed.">            old.setAvatarUrl(ObjectUtils.isEmpty(user.getAvatarUrl()) ? old.getAvatarUrl() : user.getAvatarUrl());</span>
+<span class="nc bnc" id="L121" title="All 2 branches missed.">            old.setRole(ObjectUtils.isEmpty(user.getRole()) ? old.getRole() : user.getRole());</span>
+<span class="nc bnc" id="L122" title="All 2 branches missed.">            old.setPhone(ObjectUtils.isEmpty(user.getPhone()) ? old.getPhone() : user.getPhone());</span>
+<span class="nc bnc" id="L123" title="All 2 branches missed.">            old.setEmail(ObjectUtils.isEmpty(user.getEmail()) ? old.getEmail() : user.getEmail());</span>
+<span class="nc bnc" id="L124" title="All 2 branches missed.">            old.setAddress(ObjectUtils.isEmpty(user.getAddress()) ? old.getAddress() : user.getAddress());</span>
+<span class="nc" id="L125">            super.updateById(old);</span>
+<span class="nc" id="L126">            return Result.success(&quot;修改成功&quot;);</span>
+        } else {
+<span class="nc bnc" id="L128" title="All 2 branches missed.">            if (!ObjectUtils.isEmpty(this.getOne(user.getUsername()))) {</span>
+<span class="nc" id="L129">                return Result.error(&quot;400&quot;, &quot;用户名已存在&quot;);</span>
+            }
+<span class="nc bnc" id="L131" title="All 2 branches missed.">            if (user.getNewPassword() != null) {</span>
+<span class="nc" id="L132">                validatePassword(user.getNewPassword());</span>
+<span class="nc" id="L133">                user.setPassword(PASSWORD_ENCODER.encode(user.getNewPassword()));</span>
+            }
+<span class="nc" id="L135">            super.save(user);</span>
+<span class="nc" id="L136">            return Result.success(&quot;新增成功&quot;);</span>
+        }
+    }
+
+    @Override
+    public boolean removeById(Serializable id) {
+<span class="nc" id="L142">        return super.removeById(id);</span>
+    }
+
+    public void resetPassword(String id, String newPassword) {
+<span class="nc" id="L146">        validatePassword(newPassword);</span>
+<span class="nc" id="L147">        User user = this.getById(id);</span>
+<span class="nc bnc" id="L148" title="All 2 branches missed.">        if (user == null) {</span>
+<span class="nc" id="L149">            return;</span>
+        }
+<span class="nc" id="L151">        user.setPassword(PASSWORD_ENCODER.encode(newPassword));</span>
+<span class="nc" id="L152">        this.updateById(user);</span>
+<span class="nc" id="L153">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

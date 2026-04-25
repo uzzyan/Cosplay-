@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Cart.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">mall-server</a> &gt; <a href="index.source.html" class="el_package">com.rabbiter.em.entity</a> &gt; <span class="el_source">Cart.java</span></div><h1>Cart.java</h1><pre class="source lang-java linenums">package com.rabbiter.em.entity;
+
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.extension.activerecord.Model;
+import com.baomidou.mybatisplus.annotation.TableId;
+
+@TableName(&quot;cart&quot;)
+<span class="nc" id="L9">public class Cart extends Model&lt;Cart&gt; {</span>
+    /**
+      * 主键
+      */
+    @TableId(value = &quot;id&quot;, type = IdType.AUTO)
+    private Long id;
+
+    /**
+      * 商品数量 
+      */
+    private Integer count;
+
+    /**
+      * 加入时间 
+      */
+    private String createTime;
+
+    /**
+      * 商品id 
+      */
+    private Long goodId;
+
+    private String standard;
+
+    /**
+      * 用户id 
+      */
+    private Long userId;
+
+    public Long getId() {
+<span class="nc" id="L39">        return id;</span>
+    }
+
+    public void setId(Long id) {
+<span class="nc" id="L43">        this.id = id;</span>
+<span class="nc" id="L44">    }</span>
+
+    public Integer getCount() {
+<span class="nc" id="L47">        return count;</span>
+    }
+
+    public void setCount(Integer count) {
+<span class="nc" id="L51">        this.count = count;</span>
+<span class="nc" id="L52">    }</span>
+
+    public String getCreateTime() {
+<span class="nc" id="L55">        return createTime;</span>
+    }
+
+    public void setCreateTime(String createTime) {
+<span class="nc" id="L59">        this.createTime = createTime;</span>
+<span class="nc" id="L60">    }</span>
+
+    public Long getGoodId() {
+<span class="nc" id="L63">        return goodId;</span>
+    }
+
+    public void setGoodId(Long goodId) {
+<span class="nc" id="L67">        this.goodId = goodId;</span>
+<span class="nc" id="L68">    }</span>
+
+    public String getStandard() {
+<span class="nc" id="L71">        return standard;</span>
+    }
+
+    public void setStandard(String standard) {
+<span class="nc" id="L75">        this.standard = standard;</span>
+<span class="nc" id="L76">    }</span>
+
+    public Long getUserId() {
+<span class="nc" id="L79">        return userId;</span>
+    }
+
+    public void setUserId(Long userId) {
+<span class="nc" id="L83">        this.userId = userId;</span>
+<span class="nc" id="L84">    }</span>
+
+    @Override
+    public String toString() {
+<span class="nc" id="L88">        return &quot;Cart{&quot; +</span>
+<span class="nc" id="L89">                &quot;id=&quot; + id +</span>
+<span class="nc" id="L90">                &quot;, count=&quot; + count +</span>
+<span class="nc" id="L91">                &quot;, createTime='&quot; + createTime + '\'' +</span>
+<span class="nc" id="L92">                &quot;, goodId=&quot; + goodId +</span>
+<span class="nc" id="L93">                &quot;, standard='&quot; + standard + '\'' +</span>
+<span class="nc" id="L94">                &quot;, userId=&quot; + userId +</span>
+<span class="nc" id="L95">                '}';</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

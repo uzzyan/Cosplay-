@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Good.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">mall-server</a> &gt; <a href="index.source.html" class="el_package">com.rabbiter.em.entity</a> &gt; <span class="el_source">Good.java</span></div><h1>Good.java</h1><pre class="source lang-java linenums">package com.rabbiter.em.entity;
+
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.extension.activerecord.Model;
+import com.baomidou.mybatisplus.annotation.TableId;
+
+import java.math.BigDecimal;
+
+@TableName(&quot;good&quot;)
+<span class="fc" id="L12">public class Good extends Model&lt;Good&gt; {</span>
+    /**
+      * 主键
+      */
+    @TableId(value = &quot;id&quot;, type = IdType.AUTO)
+    private Long id;
+
+    /**
+      * 商品名称 
+      */
+    private String name;
+
+    /**
+      * 商品描述 
+      */
+    private String description;
+
+
+
+    /**
+      * 折扣 
+      */
+    private Double discount;
+
+
+    /**
+      * 销量 
+      */
+    private Integer sales;
+
+    /*
+    *销售额
+    */
+    private BigDecimal saleMoney;
+
+    /**
+      * 分类id 
+      */
+    private Long categoryId;
+
+    /**
+      * 商品图片 
+      */
+    private String imgs;
+
+    /**
+      * 创建时间 
+      */
+    private String createTime;
+
+    /**
+      * 是否推荐：0不推荐，1推荐 
+      */
+    private Boolean recommend;
+
+
+    /**
+     * 是否删除
+     */
+    private Boolean isDelete;
+
+    /**
+     * 商品状态：1=上架,0=下架
+     */
+    private Integer status;
+    /**
+     * 原价
+     */
+    @TableField(exist = false)
+    private BigDecimal price;
+
+    @TableField(exist = false)
+    private Integer totalStore;
+
+    @TableField(exist = false)
+    private Boolean soldOut;
+
+    public Long getId() {
+<span class="fc" id="L90">        return id;</span>
+    }
+
+    public void setId(Long id) {
+<span class="fc" id="L94">        this.id = id;</span>
+<span class="fc" id="L95">    }</span>
+
+    public String getName() {
+<span class="fc" id="L98">        return name;</span>
+    }
+
+    public void setName(String name) {
+<span class="fc" id="L102">        this.name = name;</span>
+<span class="fc" id="L103">    }</span>
+
+    public String getDescription() {
+<span class="fc" id="L106">        return description;</span>
+    }
+
+    public void setDescription(String description) {
+<span class="nc" id="L110">        this.description = description;</span>
+<span class="nc" id="L111">    }</span>
+
+    public Double getDiscount() {
+<span class="fc" id="L114">        return discount;</span>
+    }
+
+    public void setDiscount(Double discount) {
+<span class="nc" id="L118">        this.discount = discount;</span>
+<span class="nc" id="L119">    }</span>
+
+    public Integer getSales() {
+<span class="fc" id="L122">        return sales;</span>
+    }
+
+    public void setSales(Integer sales) {
+<span class="fc" id="L126">        this.sales = sales;</span>
+<span class="fc" id="L127">    }</span>
+
+    public BigDecimal getSaleMoney() {
+<span class="fc" id="L130">        return saleMoney;</span>
+    }
+
+    public void setSaleMoney(BigDecimal saleMoney) {
+<span class="nc" id="L134">        this.saleMoney = saleMoney;</span>
+<span class="nc" id="L135">    }</span>
+
+    public Long getCategoryId() {
+<span class="fc" id="L138">        return categoryId;</span>
+    }
+
+    public void setCategoryId(Long categoryId) {
+<span class="nc" id="L142">        this.categoryId = categoryId;</span>
+<span class="nc" id="L143">    }</span>
+
+    public String getImgs() {
+<span class="fc" id="L146">        return imgs;</span>
+    }
+
+    public void setImgs(String imgs) {
+<span class="nc" id="L150">        this.imgs = imgs;</span>
+<span class="nc" id="L151">    }</span>
+
+    public String getCreateTime() {
+<span class="fc" id="L154">        return createTime;</span>
+    }
+
+    public void setCreateTime(String createTime) {
+<span class="nc" id="L158">        this.createTime = createTime;</span>
+<span class="nc" id="L159">    }</span>
+
+    public Boolean getRecommend() {
+<span class="fc" id="L162">        return recommend;</span>
+    }
+
+    public void setRecommend(Boolean recommend) {
+<span class="nc" id="L166">        this.recommend = recommend;</span>
+<span class="nc" id="L167">    }</span>
+
+    public Boolean getIsDelete() {
+<span class="fc" id="L170">        return isDelete;</span>
+    }
+
+    public void setIsDelete(Boolean delete) {
+<span class="fc" id="L174">        isDelete = delete;</span>
+<span class="fc" id="L175">    }</span>
+
+    public BigDecimal getPrice() {
+<span class="fc" id="L178">        return price;</span>
+    }
+
+    public void setPrice(BigDecimal price) {
+<span class="nc" id="L182">        this.price = price;</span>
+<span class="nc" id="L183">    }</span>
+
+    public Integer getStatus() {
+<span class="fc" id="L186">        return status;</span>
+    }
+
+    public void setStatus(Integer status) {
+<span class="fc" id="L190">        this.status = status;</span>
+<span class="fc" id="L191">    }</span>
+
+    public Integer getTotalStore() {
+<span class="fc" id="L194">        return totalStore;</span>
+    }
+
+    public void setTotalStore(Integer totalStore) {
+<span class="nc" id="L198">        this.totalStore = totalStore;</span>
+<span class="nc" id="L199">    }</span>
+
+    public Boolean getSoldOut() {
+<span class="fc" id="L202">        return soldOut;</span>
+    }
+
+    public void setSoldOut(Boolean soldOut) {
+<span class="nc" id="L206">        this.soldOut = soldOut;</span>
+<span class="nc" id="L207">    }</span>
+
+    @Override
+    public String toString() {
+<span class="nc" id="L211">        return &quot;Good{&quot; +</span>
+<span class="nc" id="L212">                &quot;id=&quot; + id +</span>
+<span class="nc" id="L213">                &quot;, name='&quot; + name + '\'' +</span>
+<span class="nc" id="L214">                &quot;, description='&quot; + description + '\'' +</span>
+<span class="nc" id="L215">                &quot;, discount=&quot; + discount +</span>
+<span class="nc" id="L216">                &quot;, sales=&quot; + sales +</span>
+<span class="nc" id="L217">                &quot;, saleMoney=&quot; + saleMoney +</span>
+<span class="nc" id="L218">                &quot;, categoryId=&quot; + categoryId +</span>
+<span class="nc" id="L219">                &quot;, imgs='&quot; + imgs + '\'' +</span>
+<span class="nc" id="L220">                &quot;, createTime='&quot; + createTime + '\'' +</span>
+<span class="nc" id="L221">                &quot;, recommend=&quot; + recommend +</span>
+<span class="nc" id="L222">                &quot;, isDelete=&quot; + isDelete +</span>
+<span class="nc" id="L223">                &quot;, status=&quot; + status +</span>
+<span class="nc" id="L224">                &quot;, price=&quot; + price +</span>
+<span class="nc" id="L225">                &quot;, totalStore=&quot; + totalStore +</span>
+<span class="nc" id="L226">                &quot;, soldOut=&quot; + soldOut +</span>
+<span class="nc" id="L227">                '}';</span>
+    }
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

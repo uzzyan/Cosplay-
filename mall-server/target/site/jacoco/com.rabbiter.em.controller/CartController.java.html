@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CartController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">mall-server</a> &gt; <a href="index.source.html" class="el_package">com.rabbiter.em.controller</a> &gt; <span class="el_source">CartController.java</span></div><h1>CartController.java</h1><pre class="source lang-java linenums">package com.rabbiter.em.controller;
+
+import cn.hutool.core.date.DateUtil;
+import com.rabbiter.em.annotation.Authority;
+import com.rabbiter.em.common.Result;
+import com.rabbiter.em.entity.AuthorityType;
+import com.rabbiter.em.entity.Cart;
+import com.rabbiter.em.entity.Good;
+import com.rabbiter.em.entity.User;
+import com.rabbiter.em.exception.ServiceException;
+import com.rabbiter.em.mapper.StandardMapper;
+import com.rabbiter.em.service.CartService;
+import com.rabbiter.em.service.GoodService;
+import com.rabbiter.em.utils.TokenUtils;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
+import java.util.List;
+
+@Authority(AuthorityType.requireLogin)
+@RestController
+@RequestMapping(&quot;/api/cart&quot;)
+<span class="fc" id="L23">public class CartController {</span>
+    @Resource
+    private CartService cartService;
+
+    @Resource
+    private GoodService goodService;
+
+    @Resource
+    private StandardMapper standardMapper;
+
+    private boolean isAdmin() {
+<span class="nc" id="L34">        User current = TokenUtils.getCurrentUser();</span>
+<span class="nc bnc" id="L35" title="All 4 branches missed.">        return current != null &amp;&amp; &quot;admin&quot;.equals(current.getRole());</span>
+    }
+
+    private void checkCartOwnership(Long cartId) {
+<span class="nc bnc" id="L39" title="All 2 branches missed.">        if (isAdmin()) return;</span>
+<span class="nc" id="L40">        Cart cart = cartService.getById(cartId);</span>
+<span class="nc bnc" id="L41" title="All 4 branches missed.">        if (cart == null || !cart.getUserId().equals(TokenUtils.getCurrentUser().getId().longValue())) {</span>
+<span class="nc" id="L42">            throw new ServiceException(&quot;403&quot;, &quot;无权访问该购物车项&quot;);</span>
+        }
+<span class="nc" id="L44">    }</span>
+
+    @GetMapping(&quot;/{id}&quot;)
+    public Result selectById(@PathVariable Long id) {
+<span class="nc" id="L48">        checkCartOwnership(id);</span>
+<span class="nc" id="L49">        return Result.success(cartService.getById(id));</span>
+    }
+
+    @Authority(AuthorityType.requireAuthority)
+    @GetMapping
+    public Result findAll() {
+<span class="nc" id="L55">        List&lt;Cart&gt; list = cartService.list();</span>
+<span class="nc" id="L56">        return Result.success(list);</span>
+    }
+
+    @GetMapping(&quot;/userid/{userId}&quot;)
+    public Result selectByUserId(@PathVariable Long userId) {
+<span class="nc" id="L61">        User current = TokenUtils.getCurrentUser();</span>
+<span class="nc bnc" id="L62" title="All 4 branches missed.">        if (current.getId().longValue() != userId &amp;&amp; !isAdmin()) {</span>
+<span class="nc" id="L63">            throw new ServiceException(&quot;403&quot;, &quot;无权访问他人购物车&quot;);</span>
+        }
+<span class="nc" id="L65">        return Result.success(cartService.selectByUserId(userId));</span>
+    }
+
+    @PostMapping
+    public Result save(@RequestBody Cart cart) {
+<span class="nc" id="L70">        cart.setUserId(TokenUtils.getCurrentUser().getId().longValue());</span>
+<span class="nc bnc" id="L71" title="All 2 branches missed.">        if (cart.getGoodId() == null) {</span>
+<span class="nc" id="L72">            throw new ServiceException(&quot;400&quot;, &quot;商品不能为空&quot;);</span>
+        }
+<span class="nc bnc" id="L74" title="All 4 branches missed.">        if (cart.getCount() == null || cart.getCount() &lt;= 0) {</span>
+<span class="nc" id="L75">            throw new ServiceException(&quot;400&quot;, &quot;数量不正确&quot;);</span>
+        }
+<span class="nc bnc" id="L77" title="All 4 branches missed.">        if (cart.getStandard() == null || cart.getStandard().trim().isEmpty()) {</span>
+<span class="nc" id="L78">            throw new ServiceException(&quot;400&quot;, &quot;请选择规格&quot;);</span>
+        }
+<span class="nc" id="L80">        Good good = goodService.getById(cart.getGoodId());</span>
+<span class="nc bnc" id="L81" title="All 8 branches missed.">        if (good == null || Boolean.TRUE.equals(good.getIsDelete()) || (good.getStatus() != null &amp;&amp; good.getStatus() == 0)) {</span>
+<span class="nc" id="L82">            throw new ServiceException(&quot;500&quot;, &quot;商品已下架&quot;);</span>
+        }
+<span class="nc" id="L84">        int store = standardMapper.getStore(cart.getGoodId(), cart.getStandard());</span>
+<span class="nc bnc" id="L85" title="All 2 branches missed.">        if (store &lt; cart.getCount()) {</span>
+<span class="nc" id="L86">            throw new ServiceException(&quot;500&quot;, &quot;库存不足&quot;);</span>
+        }
+<span class="nc" id="L88">        cart.setCreateTime(DateUtil.now());</span>
+<span class="nc" id="L89">        cartService.saveOrUpdate(cart);</span>
+<span class="nc" id="L90">        return Result.success();</span>
+    }
+
+    @PutMapping
+    public Result update(@RequestBody Cart cart) {
+<span class="nc bnc" id="L95" title="All 2 branches missed.">        if (cart.getId() != null) {</span>
+<span class="nc" id="L96">            checkCartOwnership(cart.getId());</span>
+        }
+<span class="nc" id="L98">        cart.setUserId(TokenUtils.getCurrentUser().getId().longValue());</span>
+<span class="nc" id="L99">        cartService.updateById(cart);</span>
+<span class="nc" id="L100">        return Result.success();</span>
+    }
+
+    @DeleteMapping(&quot;/{id}&quot;)
+    public Result delete(@PathVariable Long id) {
+<span class="nc" id="L105">        checkCartOwnership(id);</span>
+<span class="nc" id="L106">        cartService.removeById(id);</span>
+<span class="nc" id="L107">        return Result.success();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

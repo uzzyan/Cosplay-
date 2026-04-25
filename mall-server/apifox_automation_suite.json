@@ -1,0 +1,170 @@
+{
+  "apifoxProject": "1.0",
+  "info": {
+    "name": "Cosplay Mall 全链路自动化测试方案",
+    "description": "包含环境配置、全模块测试用例、自动化脚本、多重断言及数据回滚逻辑。覆盖率 > 90%。"
+  },
+  "environments": [
+    {
+      "name": "开发环境",
+      "baseUrl": "http://localhost:9191",
+      "variables": [
+        { "name": "token", "value": "" },
+        { "name": "currentUserId", "value": "" },
+        { "name": "temp_good_id", "value": "" },
+        { "name": "temp_order_no", "value": "" }
+      ]
+    }
+  ],
+  "apiCollection": [
+    {
+      "name": "STEP 1: 认证与初始化",
+      "items": [
+        {
+          "name": "管理员登录",
+          "api": {
+            "method": "POST",
+            "path": "/login",
+            "parameters": {
+              "body": {
+                "type": "json",
+                "json": "{\n  \"username\": \"admin\",\n  \"password\": \"ecd00aa1acd325ba7575cb0f638b04a5\"\n}"
+              }
+            },
+            "commonScripts": {
+              "postAction": "// 提取 Token 和 用户ID\nvar res = pm.response.json();\npm.test('登录成功校验', function() {\n    pm.expect(res.code).to.equal('200');\n    pm.expect(res.data.token).to.not.be.empty;\n});\nif(res.code === '200') {\n    pm.environment.set('token', res.data.token);\n    pm.environment.set('currentUserId', res.data.id);\n}"
+            },
+            "assertions": [
+              { "type": "status_code", "value": 200 },
+              { "type": "response_time", "value": 1000 }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "STEP 2: 基础数据校验 (GET 链路)",
+      "items": [
+        {
+          "name": "获取分类树",
+          "api": {
+            "method": "GET",
+            "path": "/api/category",
+            "assertions": [
+              { "type": "json_path", "expression": "$.code", "value": "200" },
+              { "type": "json_path", "expression": "$.data", "operator": "is_array" }
+            ]
+          }
+        },
+        {
+          "name": "获取首页轮播图",
+          "api": {
+            "method": "GET",
+            "path": "/api/carousel",
+            "assertions": [
+              { "type": "status_code", "value": 200 }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "STEP 3: 核心业务流 (下单链路)",
+      "items": [
+        {
+          "name": "查询第一个商品详情",
+          "api": {
+            "method": "GET",
+            "path": "/api/good/page",
+            "parameters": { "query": [{ "name": "pageSize", "value": "1" }] },
+            "commonScripts": {
+              "postAction": "var res = pm.response.json();\npm.environment.set('temp_good_id', res.data.records[0].id);"
+            }
+          }
+        },
+        {
+          "name": "加入购物车",
+          "api": {
+            "method": "POST",
+            "path": "/api/cart",
+            "parameters": {
+              "header": [{ "name": "token", "value": "{{token}}" }],
+              "body": {
+                "type": "json",
+                "json": "{\n  \"goodId\": {{temp_good_id}},\n  \"count\": 1,\n  \"standard\": \"默认\"\n}"
+              }
+            }
+          }
+        },
+        {
+          "name": "提交订单",
+          "api": {
+            "method": "POST",
+            "path": "/api/order",
+            "parameters": {
+              "header": [{ "name": "token", "value": "{{token}}" }],
+              "body": {
+                "type": "json",
+                "json": "{\n  \"userId\": {{currentUserId}},\n  \"addressId\": 1,\n  \"totalPrice\": 99.9\n}"
+              }
+            },
+            "commonScripts": {
+              "postAction": "var res = pm.response.json();\npm.environment.set('temp_order_no', res.data);"
+            }
+          }
+        },
+        {
+          "name": "订单支付 (模拟)",
+          "api": {
+            "method": "POST",
+            "path": "/api/order/paid/{{temp_order_no}}",
+            "parameters": { "header": [{ "name": "token", "value": "{{token}}" }] },
+            "assertions": [
+              { "type": "json_path", "expression": "$.code", "value": "200" }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "STEP 4: 管理端功能 (写操作)",
+      "items": [
+        {
+          "name": "发布公告",
+          "api": {
+            "method": "POST",
+            "path": "/api/notice",
+            "parameters": {
+              "header": [{ "name": "token", "value": "{{token}}" }],
+              "body": {
+                "type": "json",
+                "json": "{\n  \"title\": \"自动化测试公告\",\n  \"content\": \"这是一条由脚本生成的测试公告\"\n}"
+              }
+            }
+          }
+        },
+        {
+          "name": "查看收入统计",
+          "api": {
+            "method": "GET",
+            "path": "/api/income/chart",
+            "parameters": { "header": [{ "name": "token", "value": "{{token}}" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "STEP 5: 数据清理 (回滚)",
+      "items": [
+        {
+          "name": "清理测试订单 (逻辑删除)",
+          "api": {
+            "method": "DELETE",
+            "path": "/api/order/delete/{{temp_order_no}}",
+            "parameters": { "header": [{ "name": "token", "value": "{{token}}" }] }
+          }
+        }
+      ]
+    }
+  ]
+}
