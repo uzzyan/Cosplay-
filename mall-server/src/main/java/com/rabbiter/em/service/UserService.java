@@ -97,6 +97,8 @@ public class UserService extends ServiceImpl<UserMapper, User> {
             throw new ServiceException("400", "密码不能为空");
         }
         //validatePassword(password);
+        // Bug6修复：恢复注册时的密码强度校验，要求密码包含字母、数字和特殊符号
+        validatePassword(password);
         if (phone == null || phone.trim().isEmpty()) {
             throw new ServiceException("400", "联系方式不能为空");
         }
@@ -130,7 +132,11 @@ public class UserService extends ServiceImpl<UserMapper, User> {
             User old = this.baseMapper.selectById(user.getId());
             old.setNickname(ObjectUtils.isEmpty(user.getNickname()) ? old.getNickname() : user.getNickname());
             old.setAvatarUrl(ObjectUtils.isEmpty(user.getAvatarUrl()) ? old.getAvatarUrl() : user.getAvatarUrl());
-            old.setRole(ObjectUtils.isEmpty(user.getRole()) ? old.getRole() : user.getRole());
+            // Bug2修复：只有管理员才能修改 role，防止普通用户自我提权
+            User currentUser = TokenUtils.getCurrentUser();
+            if (currentUser != null && "admin".equals(currentUser.getRole())) {
+                old.setRole(ObjectUtils.isEmpty(user.getRole()) ? old.getRole() : user.getRole());
+            }
             old.setPhone(ObjectUtils.isEmpty(user.getPhone()) ? old.getPhone() : user.getPhone());
             old.setEmail(ObjectUtils.isEmpty(user.getEmail()) ? old.getEmail() : user.getEmail());
             old.setAddress(ObjectUtils.isEmpty(user.getAddress()) ? old.getAddress() : user.getAddress());

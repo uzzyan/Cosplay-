@@ -94,9 +94,11 @@ public class UserController {
 
     /**
      * 保存或更新用户 (Save or Update User)
+     * 需要管理员权限：防止普通用户通过此接口把自己提权为 admin
      * @param user 用户对象
      * @return Result 操作结果
      */
+    @Authority(AuthorityType.requireAuthority)
     @PostMapping("/user")
     public Result save(@RequestBody User user) {
         return userService.saveUpdate(user);

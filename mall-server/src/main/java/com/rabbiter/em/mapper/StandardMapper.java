@@ -12,4 +12,7 @@ public interface StandardMapper extends BaseMapper<Standard> {
 
     @Select("select store from good_standard where good_id = #{good_id} and value = #{standard}")
     int getStore(@Param("good_id") long good_id, @Param("standard")String standard);
+
+    @Select("select price from good_standard where good_id = #{good_id} and value = #{standard}")
+    java.math.BigDecimal getPrice(@Param("good_id") long good_id, @Param("standard") String standard);
 }

@@ -45,7 +45,11 @@ public class FileService extends ServiceImpl<FileMapper, MyFile> {
     ));
 
     public String upload(MultipartFile uploadFile){
+        // Bug8修复：校验文件名不为 null，防止空指针异常
         String originalFilename = uploadFile.getOriginalFilename();
+        if (originalFilename == null || originalFilename.trim().isEmpty()) {
+            throw new ServiceException(Constants.CODE_500, "文件名不能为空");
+        }
         String type = originalFilename.substring(originalFilename.lastIndexOf(".")+1).toLowerCase();
         if (!ALLOWED_TYPES.contains(type)) {
             throw new ServiceException(Constants.CODE_500, "不支持的文件类型: " + type);
@@ -97,8 +101,12 @@ public class FileService extends ServiceImpl<FileMapper, MyFile> {
         return url;
     }
 
-    //根据文件名下载文件
+    // 根据文件名下载文件
     public void download(String fileName, HttpServletResponse response){
+        // Bug5修复：校验文件名，防止路径遍历攻击（如 ../../etc/passwd）
+        if (fileName == null || fileName.contains("..") || fileName.contains("/") || fileName.contains("\\")) {
+            throw new ServiceException(Constants.CODE_500, "非法文件名");
+        }
         File file = new File(Constants.fileFolderPath+fileName);
         if(!file.exists()){
             throw new ServiceException(Constants.CODE_500,"文件不存在");

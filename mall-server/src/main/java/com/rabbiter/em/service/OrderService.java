@@ -72,18 +72,28 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
         // 插入订单主表
         orderMapper.insert(order);
 
-        OrderGoods orderGoods = new OrderGoods();
-        orderGoods.setOrderId(order.getId());
         // 遍历解析order里携带的goods数组，并用orderItem对象来接收
         String goods = order.getGoods();
         List<OrderItem> orderItems = JSON.parseArray(goods, OrderItem.class);
+
+        // Bug1修复：服务端根据规格表重新计算总价，忽略前端传入的 totalPrice，防止价格篡改
+        BigDecimal calculatedTotal = BigDecimal.ZERO;
         for (OrderItem orderItem : orderItems) {
-            long good_id = orderItem.getId();
-            String standard = orderItem.getStandard();
-            int num = orderItem.getNum();
-            orderGoods.setGoodId(good_id);
-            orderGoods.setCount(num);
-            orderGoods.setStandard(standard);
+            BigDecimal unitPrice = standardMapper.getPrice(orderItem.getId(), orderItem.getStandard());
+            if (unitPrice == null) {
+                throw new ServiceException(Constants.CODE_500, "商品规格不存在：" + orderItem.getStandard());
+            }
+            calculatedTotal = calculatedTotal.add(unitPrice.multiply(new BigDecimal(orderItem.getNum())));
+        }
+        order.setTotalPrice(calculatedTotal);
+
+        for (OrderItem orderItem : orderItems) {
+            // Bug3修复：每次循环创建新的 OrderGoods 对象，防止多商品订单只保存最后一条
+            OrderGoods orderGoods = new OrderGoods();
+            orderGoods.setOrderId(order.getId());
+            orderGoods.setGoodId(orderItem.getId());
+            orderGoods.setCount(orderItem.getNum());
+            orderGoods.setStandard(orderItem.getStandard());
             // 插入到订单商品关联表 (order_goods)
             orderGoodsMapper.insert(orderGoods);
         }
