@@ -12,6 +12,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.lang.reflect.Method;
 
+/**
+ * 权限验证拦截器
+ * @author uzzyan
+ */
+
 @Component
 public class AuthorityInterceptor implements HandlerInterceptor {
     @Override

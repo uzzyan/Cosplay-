@@ -7,7 +7,7 @@ import { createStore } from 'vuex'
 
 export default createStore({
   state: {
-    baseApi: "",
+    baseApi: 'http://localhost:9191', // 后端API地址
   },
   getters: {
   },

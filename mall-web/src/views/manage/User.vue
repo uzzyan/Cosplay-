@@ -220,9 +220,24 @@ const load = () => {
     })
     .then((res) => {
       if (res.code === '200') {
-        tableData.value = res.data.records
-        total.value = res.data.total
+        // 确保数据是数组
+        tableData.value = Array.isArray(res.data.records) ? res.data.records : []
+        total.value = res.data.total || 0
+      } else if (res.code === '401') {
+        ElMessage.error('登录状态已失效，请重新登录')
+        tableData.value = []
+        total.value = 0
+      } else {
+        ElMessage.error(res.msg || '加载数据失败')
+        tableData.value = []
+        total.value = 0
       }
+    })
+    .catch((error) => {
+      console.error('加载用户数据失败:', error)
+      ElMessage.error('加载数据失败，请检查网络连接')
+      tableData.value = []
+      total.value = 0
     })
 }
 

@@ -144,9 +144,14 @@ onMounted(() => {
       const sum = incomes.reduce((acc, val) => acc + val, 0)
       total.value = sum
       totalAll.value = sum
+    } else if (res.code === '401') {
+      ElMessage.error('登录状态已失效，请重新登录')
+    } else {
+      ElMessage.error(res.msg || '加载数据失败')
     }
   }).catch(err => {
     console.error('加载收入图表失败:', err)
+    ElMessage.error('加载失败，请检查网络连接')
   })
   
   // 渲染本周折线图
@@ -158,9 +163,14 @@ onMounted(() => {
       
       const sum = weekIncome.reduce((acc, val) => acc + val, 0)
       totalWeek.value = sum
+    } else if (res.code === '401') {
+      ElMessage.error('登录状态已失效，请重新登录')
+    } else {
+      ElMessage.error(res.msg || '加载数据失败')
     }
   }).catch(err => {
     console.error('加载本周收入失败:', err)
+    ElMessage.error('加载失败，请检查网络连接')
   })
   
   // 渲染本月折线图
@@ -172,9 +182,14 @@ onMounted(() => {
       
       const sum = res.data.monthIncome.reduce((acc, val) => acc + val, 0)
       totalMonth.value = sum
+    } else if (res.code === '401') {
+      ElMessage.error('登录状态已失效，请重新登录')
+    } else {
+      ElMessage.error(res.msg || '加载数据失败')
     }
   }).catch(err => {
     console.error('加载本月收入失败:', err)
+    ElMessage.error('加载失败，请检查网络连接')
   })
 })
 

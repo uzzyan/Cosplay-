@@ -14,6 +14,11 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
+/**
+ * 文件管理控制器
+ * @author uzzyan
+ */
+
 @Authority(AuthorityType.requireLogin)
 @RestController
 @RequestMapping("/file")

@@ -19,6 +19,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/carousel")
+@Authority(AuthorityType.noRequire)  // 轮播图浏览不需要登录
 public class CarouselController {
     @Resource
     private CarouselService carouselService;

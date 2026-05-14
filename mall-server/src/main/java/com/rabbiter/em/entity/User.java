@@ -6,6 +6,11 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+/**
+ * 用户实体类
+ * @author uzzyan
+ */
+
 @TableName("sys_user")
 public class User {
     @TableId(type=IdType.AUTO)

@@ -17,6 +17,11 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import java.util.List;
 
+/**
+ * 购物车控制器
+ * @author uzzyan
+ */
+
 @Authority(AuthorityType.requireLogin)
 @RestController
 @RequestMapping("/api/cart")

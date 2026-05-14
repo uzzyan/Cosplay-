@@ -19,6 +19,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * 用户控制器
+ * @author uzzyan
+ */
+
 /*
 这个注解表示该控制器下所有接口都可以通过跨域访问，注解内可以指定某一域名
 也可以配置config类

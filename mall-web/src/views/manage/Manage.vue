@@ -4,7 +4,7 @@
  * @Date: 2024-03-21 15:27:05
 -->
 <template>
-  <div style="height: 100%">
+  <div class="manage-container" style="height: 100%">
     <el-container style="height: 100%">
       <!--      侧边栏-->
       <el-aside
@@ -35,14 +35,14 @@
   </div>
 </template>
 
-<style>
-.el-header {
+<style scoped>
+.manage-container .el-header {
   background-color: #b3c0d1;
   color: #333;
   line-height: 80px;
 }
 
-.el-aside {
+.manage-container .el-aside {
   color: #333;
 }
 

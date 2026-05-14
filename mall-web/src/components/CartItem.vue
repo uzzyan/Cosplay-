@@ -66,7 +66,7 @@
         <el-button 
           type="success" 
           @click="pay"
-          size="medium"
+          size="default"
           round
         >
           <el-icon><Wallet /></el-icon>
@@ -81,7 +81,7 @@
           <template #reference>
             <el-button 
               type="danger" 
-              size="medium"
+              size="default"
               plain
               round
             >

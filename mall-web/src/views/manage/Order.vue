@@ -64,7 +64,7 @@
                 width="300"
             ></el-table-column>
             <el-table-column prop="state" label="状态" width="100">
-                <template slot-scope="scope">
+                <template #default="scope">
                     <el-tag
                         type="success"
                         v-if="scope.row.state === '已支付'"
@@ -128,7 +128,8 @@
                 <el-table-column label="图片" width="150">
                     <template #default="scope">
                         <img
-                            :src="baseApi + scope.row.img"
+                            v-if="scope.row"
+                            :src="baseApi + scope.row.imgs"
                             min-width="100"
                             height="100"
                         />
@@ -148,16 +149,14 @@
                 <el-table-column prop="discount" label="折扣"></el-table-column>
                 <el-table-column label="实价">
                     <template #default="scope">
-                        {{ scope.row.price * scope.row.discount }}
+                        {{ scope.row ? scope.row.price * scope.row.discount : 0 }}
                     </template>
                 </el-table-column>
                 <el-table-column prop="count" label="数量"></el-table-column>
                 <el-table-column label="总价">
                     <template #default="scope">
                         {{
-                            scope.row.price *
-                            scope.row.discount *
-                            scope.row.count
+                            scope.row ? scope.row.price * scope.row.discount * scope.row.count : 0
                         }}
                     </template>
                 </el-table-column>
@@ -215,25 +214,24 @@ const load = () => {
     }
   })
     .then((res) => {
-      tableData.value = res.data.records || []
-      total.value = res.data.total
+      if (res.code === '200') {
+        tableData.value = Array.isArray(res.data.records) ? res.data.records : []
+        total.value = res.data.total || 0
+      } else if (res.code === '401') {
+        ElMessage.error('登录状态已失效，请重新登录')
+        tableData.value = []
+        total.value = 0
+      } else {
+        ElMessage.error(res.msg || '加载数据失败')
+        tableData.value = []
+        total.value = 0
+      }
     })
     .catch((e) => {
-      if (e.response.data == undefined) {
-        ElMessage({
-          showClose: true,
-          message: e,
-          type: 'error',
-          duration: 5000
-        })
-      } else {
-        ElMessage({
-          showClose: true,
-          message: e.response.data,
-          type: 'error',
-          duration: 5000
-        })
-      }
+      console.error('加载订单数据失败:', e)
+      ElMessage.error('加载失败，请检查网络连接')
+      tableData.value = []
+      total.value = 0
     })
 }
 
@@ -273,10 +271,20 @@ const exportOrders = () => {
 const showDetail = (row) => {
   API.get('/api/order/orderNo/' + row.orderNo).then((res) => {
     if (res.code === '200') {
-      detail.value = []
-      detail.value.push(res.data)
+      // 确保详情数据是数组
+      detail.value = Array.isArray(res.data) ? res.data : [res.data]
       dialogFormVisible.value = true
+    } else if (res.code === '401') {
+      ElMessage.error('登录状态已失效，请重新登录')
+      detail.value = []
+    } else {
+      ElMessage.error(res.msg || '加载订单详情失败')
+      detail.value = []
     }
+  }).catch((err) => {
+    console.error('加载订单详情失败:', err)
+    ElMessage.error('加载失败，请检查网络连接')
+    detail.value = []
   })
 }
 
@@ -286,7 +294,14 @@ const delivery = (order) => {
     if (res.code === '200') {
       ElMessage.success('成功发货')
       order.state = '已发货'
+    } else if (res.code === '401') {
+      ElMessage.error('登录状态已失效，请重新登录')
+    } else {
+      ElMessage.error(res.msg || '发货失败')
     }
+  }).catch((err) => {
+    console.error('发货失败:', err)
+    ElMessage.error('发货失败，请重试')
   })
 }
 

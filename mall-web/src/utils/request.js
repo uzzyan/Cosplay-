@@ -16,6 +16,7 @@ request.interceptors.request.use(config => {
     if(user){
          config.headers['token'] = user.token;  // 设置token
     }
+    // 传递自定义配置到response拦截器
     return config
 }, error => {
     return Promise.reject(error)
@@ -37,10 +38,13 @@ request.interceptors.response.use(
         // 发生错误，如token失效，则返回登录
         if(res.code==='401'){
             localStorage.removeItem("user");
-            ElMessageBox.alert(res.msg || '登录状态已失效，请重新登录', '提示')
-                .then(() =>{
-                    window.location.href = '/login';
-                } )
+            if (!response.config.skipAuthError) {
+                ElMessage.warning(res.msg || '登录状态已失效，请重新登录');
+                // 立即跳转登录页（不在登录页时才跳）
+                if (router.currentRoute.value.path !== '/login') {
+                    router.push('/login')
+                }
+            }
         }
         return res;
     },

@@ -249,9 +249,32 @@ const submit = () => {
     })
     return false
   }
+  // 如果文件是新选择的(状态为ready),先上传文件
   if (fileList.value[0].status === 'ready') {
-    // 注意：这里需要通过refs访问upload组件
+    // 手动触发上传
+    const uploadRef = document.querySelector('.upload-demo input[type=file]')
+    if (uploadRef) {
+      // 创建上传请求
+      const file = fileList.value[0]
+      const formData = new FormData()
+      formData.append('file', file.raw)
+      
+      API.post(baseApi + '/file/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      }).then((res) => {
+        if (res.code === '200') {
+          good.value.imgs = res.data
+          save()
+        } else {
+          ElMessage.error(res.msg || '上传图片失败')
+        }
+      }).catch((err) => {
+        console.error('上传图片失败:', err)
+        ElMessage.error('上传图片失败，请重试')
+      })
+    }
   } else if (fileList.value[0].status === 'success') {
+    // 文件已经上传成功,直接保存
     save()
   }
 }
@@ -262,45 +285,59 @@ const save = () => {
       good.value.id = res2.data
       API.post(url + '/standard?goodId=' + good.value.id, standards.value).then((res) => {
         if (res.code === '200') {
-          ElMessage({
-            type: 'success',
-            message: '操作成功',
-            showClose: true
-          })
+          ElMessage.success('操作成功')
           router.go(-1)
         } else {
-          ElMessage({
-            type: 'error',
-            message: '操作失败',
-            showClose: true
-          })
+          ElMessage.error(res.msg || '操作失败')
         }
+      }).catch((err) => {
+        console.error('保存规格数据失败:', err)
+        ElMessage.error('保存失败，请重试')
       })
+    } else if (res2.code === '401') {
+      ElMessage.error('登录状态已失效，请重新登录')
     } else {
-      ElMessage({
-        type: 'error',
-        message: res2.msg
-      })
+      ElMessage.error(res2.msg || '保存失败')
     }
+  }).catch((err) => {
+    console.error('保存商品数据失败:', err)
+    ElMessage.error('保存失败，请检查网络连接')
   })
 }
 
 onMounted(() => {
   API.get('/api/category').then((res) => {
     if (res.code === '200') {
-      categoryItems.value = res.data
+      // 确保categoryItems是数组
+      categoryItems.value = Array.isArray(res.data) ? res.data : []
+      
+      if (route.query.good) {
+        good.value = JSON.parse(route.query.good)
+        fileList.value = [{ name: '原始图片', url: good.value.imgs }]
+        
+        // 正确获取选中的分类
+        checkedCategory.value = categoryItems.value.find(item => item.id === good.value.categoryId)
+        
+        API.get(url + '/standard/' + good.value.id).then((res2) => {
+          if (res2.code === '200') {
+            let standardsData = JSON.parse(res2.data)
+            standards.value = Array.isArray(standardsData) ? standardsData : []
+          }
+        }).catch((err) => {
+          console.error('加载规格数据失败:', err)
+        })
+      }
+    } else if (res.code === '401') {
+      ElMessage.error('登录状态已失效，请重新登录')
+      categoryItems.value = []
+    } else {
+      ElMessage.error(res.msg || '加载分类数据失败')
+      categoryItems.value = []
     }
-    if (route.query.good) {
-      good.value = JSON.parse(route.query.good)
-      fileList.value = [{ name: '原始图片', url: good.value.imgs }]
-      checkedCategory.value = categoryItems.value[good.value.categoryId]
-      API.get(url + '/standard/' + good.value.id).then((res) => {
-        if (res.code === '200') {
-          let standardsData = JSON.parse(res.data)
-          standards.value = standardsData
-        }
-      })
-    }
+  }).catch((err) => {
+    console.error('加载分类数据失败:', err)
+    ElMessage.error('加载失败，请检查网络连接')
+    categoryItems.value = []
   })
 })
 </script>

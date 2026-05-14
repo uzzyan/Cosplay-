@@ -11,73 +11,79 @@
       <!--<router-link to="/manage/home">
         <img src="../resource/logo.png" style="width: 32px;position: relative; top: 7px;right: 6px;">
       </router-link>-->
-      <span style="color: #333;font-size: 20px;font-weight: 600;" v-show="!isCollapse">U次元 - Cosplay服装商城</span>
+      <span style="color: #333;font-size: 20px;font-weight: 600;" v-show="!isCollapse">U次元 - Cosplay商城</span>
     </div>
     <!-- 用户管理 -->
     <el-menu-item index="/manage/user" v-if="menuFlags.userMenu" class="el-item-menu" style="font-size: 16px">
-      <i class="el-icon-user" style="font-size: 20px;color: #606266;"></i>
+      <el-icon style="font-size: 20px;color: #606266;"><User /></el-icon>
       <span>用户管理</span>
     </el-menu-item>
 
     <!-- 分类管理 -->
     <el-menu-item index="/manage/category" v-if="menuFlags.categoryMenu" class="el-item-menu" style="font-size: 16px">
-      <i class="el-icon-menu" style="font-size: 20px;color: #606266;"></i>
+      <el-icon style="font-size: 20px;color: #606266;"><Menu /></el-icon>
       <span>分类管理</span>
     </el-menu-item>
 
     <!-- 商品管理 -->
     <el-menu-item index="/manage/good" v-if="menuFlags.goodMenu" class="el-item-menu" style="font-size: 16px">
-      <i class="el-icon-goods" style="font-size: 20px;color: #606266;"></i>
+      <el-icon style="font-size: 20px;color: #606266;"><Goods /></el-icon>
       <span>商品管理</span>
     </el-menu-item>
 
     <!-- 订单管理 -->
     <el-menu-item index="/manage/order" v-if="menuFlags.orderMenu" class="el-item-menu" style="font-size: 16px">
-      <i class="el-icon-document" style="font-size: 20px;color: #606266;"></i>
+      <el-icon style="font-size: 20px;color: #606266;"><Document /></el-icon>
       <span>订单管理</span>
     </el-menu-item>
 
     <!-- 轮播图管理 -->
     <el-menu-item index="/manage/carousel" v-if="menuFlags.carouselMenu" class="el-item-menu" style="font-size: 16px">
-      <i class="el-icon-picture-outline" style="font-size: 20px;color: #606266;"></i>
+      <el-icon style="font-size: 20px;color: #606266;"><Picture /></el-icon>
       <span>轮播图管理</span>
     </el-menu-item>
 
     <!-- 留言管理 -->
     <el-menu-item index="/manage/message" v-if="menuFlags.messageMenu" class="el-item-menu" style="font-size: 16px">
-      <i class="el-icon-chat-dot-round" style="font-size: 20px;color: #606266;"></i>
+      <el-icon style="font-size: 20px;color: #606266;"><ChatDotRound /></el-icon>
       <span>留言管理</span>
+    </el-menu-item>
+
+    <!-- 公告管理 -->
+    <el-menu-item index="/manage/notice" v-if="menuFlags.noticeMenu" class="el-item-menu" style="font-size: 16px">
+      <el-icon style="font-size: 20px;color: #606266;"><Bell /></el-icon>
+      <span>公告管理</span>
     </el-menu-item>
 
     <!-- 售后管理 -->
     <el-menu-item index="/manage/afterSale" v-if="menuFlags.afterSaleMenu" class="el-item-menu" style="font-size: 16px">
-      <i class="el-icon-s-order" style="font-size: 20px;color: #606266;"></i>
+      <el-icon style="font-size: 20px;color: #606266;"><ShoppingCart /></el-icon>
       <span>售后管理</span>
     </el-menu-item>
 
     <!-- 文件管理 -->
-    <el-submenu v-if="fileGroup" index="file" class="el-item-menu" style="font-size: 16px">
+    <el-sub-menu v-if="fileGroup" index="file" class="el-item-menu" style="font-size: 16px">
       <template #title>
-        <i class="el-icon-folder-opened" style="font-size: 20px;color: #606266;"></i>
+        <el-icon style="font-size: 20px;color: #606266;"><FolderOpened /></el-icon>
         <span>文件管理</span>
       </template>
       <el-menu-item index="/manage/file" v-if="menuFlags.fileMenu">文件管理</el-menu-item>
       <el-menu-item index="/manage/avatar" v-if="menuFlags.avatarMenu">头像管理</el-menu-item>
-    </el-submenu>
+    </el-sub-menu>
 
     <!-- 数据报表 -->
-    <el-submenu v-if="incomeGroup" index="report" class="el-item-menu" style="font-size: 16px">
+    <el-sub-menu v-if="incomeGroup" index="report" class="el-item-menu" style="font-size: 16px">
       <template #title>
-        <i class="el-icon-data-analysis" style="font-size: 20px;color: #606266;"></i>
+        <el-icon style="font-size: 20px;color: #606266;"><DataAnalysis /></el-icon>
         <span>数据报表</span>
       </template>
       <el-menu-item index="/manage/incomeChart" v-if="menuFlags.incomeChartMenu">图表数据</el-menu-item>
       <el-menu-item index="/manage/incomeRank" v-if="menuFlags.incomeRankMenu">收入数据</el-menu-item>
-    </el-submenu>
+    </el-sub-menu>
 
     <!-- 前台 -->
     <el-menu-item index="/" class="el-item-menu" style="font-size: 16px">
-      <i class="el-icon-s-home" style="font-size: 20px;color: #606266;"></i>
+      <el-icon style="font-size: 20px;color: #606266;"><HomeFilled /></el-icon>
       <span>前台首页</span>
     </el-menu-item>
   </el-menu>
@@ -86,6 +92,19 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import request from '@/utils/request'
+import {
+  User,
+  Menu,
+  Goods,
+  Document,
+  Picture,
+  ChatDotRound,
+  ShoppingCart,
+  FolderOpened,
+  DataAnalysis,
+  HomeFilled,
+  Bell
+} from '@element-plus/icons-vue'
 
 const props = defineProps({
   isCollapse: Boolean
@@ -101,6 +120,7 @@ const menuFlags = ref({
   orderMenu: false,
   categoryMenu: false,
   messageMenu: false,
+  noticeMenu: false,
   afterSaleMenu: false,
   incomeChartMenu: false,
   incomeRankMenu: false
@@ -123,6 +143,7 @@ const setAdminMenus = () => {
   menuFlags.value.carouselMenu = true
   menuFlags.value.orderMenu = true
   menuFlags.value.messageMenu = true
+  menuFlags.value.noticeMenu = true
   menuFlags.value.afterSaleMenu = true
   menuFlags.value.incomeChartMenu = true
   menuFlags.value.incomeRankMenu = true

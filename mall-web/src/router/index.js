@@ -15,7 +15,7 @@ const routes = [
       {path: 'topview', name: 'topview', meta: {title:'U次元 - Cosplay服装商城'}, component: () => import('../views/front/TopView.vue'),},
       {path: 'cart', name: 'cart', meta: {title:'我的购物车',requireLogin: true}, component: () => import('../views/front/good/Cart.vue'),},
       {path: 'goodList', name: 'goodList', meta: {title:'商品界面'}, component: () => import('../views/front/good/GoodList.vue'),},
-      {path: 'goodView/:goodId', name: 'goodview', meta: {title:'商品详情'}, component: () => import('../views/front/good/GoodView.vue'),},
+      {path: 'goodView/:goodId', name: 'goodview', meta: {title:'商品详情',requireLogin: true}, component: () => import('../views/front/good/GoodView.vue'),},
       {path: 'preOrder', name: 'preOrder', meta: {title:'确认订单',requireLogin: true}, component: () => import('../views/front/order/PreOrder.vue'),},
       {path: 'pay', name: 'pay', meta: {title:'支付',requireLogin: true}, component: () => import('../views/front/order/Pay.vue'),},
       {path: 'orderList', name: 'orderList', meta: {title:'我的订单',requireLogin: true}, component: () => import('../views/front/order/OrderList.vue'),},
@@ -44,6 +44,7 @@ const routes = [
       {path: 'goodInfo', name: 'goodInfo', meta: {title:'商品管理',path: '商品/商品管理/商品信息',requireAuth: true}, component: () => import('../views/manage/good/GoodInfo.vue'),},
       {path: 'order', name: 'order', meta: {title:'订单管理',path: '商品/订单管理',requireAuth: true}, component: () => import('../views/manage/Order.vue'),},
       {path: 'message', name: 'manageMessage', meta: {title:'留言管理',path: '互动/留言管理',requireAuth: true}, component: () => import('../views/manage/Message.vue'),},
+      {path: 'notice', name: 'manageNotice', meta: {title:'公告管理',path: '系统/公告管理',requireAuth: true}, component: () => import('../views/manage/Notice.vue'),},
       {path: 'afterSale', name: 'manageAfterSale', meta: {title:'售后管理',path: '订单/售后管理',requireAuth: true}, component: () => import('../views/manage/AfterSale.vue'),},
       {path: 'incomeChart', name: 'incomeChart', meta: {title:'收入图表',path: '营收/收入图表',requireAuth: true}, component: () => import('../views/manage/income/IncomeChart.vue'),},
       {path: 'incomeRank', name: 'incomeRank', meta: {title:'收入排行',path: '营收/收入排行',requireAuth: true}, component: () => import('../views/manage/income/IncomeRank.vue'),},
@@ -68,7 +69,7 @@ const routes = [
     component: () => import(/* webpackChunkName: "about" */ '../views/Register.vue')
   },
   {
-    path: '/*',
+    path: '/:pathMatch(.*)*',
     name: 'notFound',
     meta: {
       title: '找不到页面'
@@ -83,6 +84,10 @@ const router = createRouter({
 })
 
 //beforeEach是router的钩子函数，在进入路由前执行
+let roleCache = null // 角色缓存
+let roleCacheTime = 0 // 角色缓存时间
+const ROLE_CACHE_DURATION = 5 * 60 * 1000 // 5分钟缓存
+
 router.beforeEach(async (to, from, next) => {
   // 设置页面标题
   if (to.meta.title) {
@@ -93,49 +98,114 @@ router.beforeEach(async (to, from, next) => {
   
   if (to.meta.requireAuth === true) {
     // 先检查本地存储是否有token
-    const user = localStorage.getItem("user");
-    if (!user) {
+    const userStr = localStorage.getItem("user")
+    if (!userStr) {
       // 没有登录，直接跳转
       ElMessage.warning('请先登录')
-      next('/login');
-      return;
+      next('/login')
+      return
     }
     
     try {
-      //在后台获得该用户的身份
-      const res = await request.post("/role");
-      if (res.code === '200') {
-        const role = res.data;
-        if (role === 'admin') {
-          // 管理员放行
-          next()
-        } else if (role === 'user') {
-          ElMessage.error('您没有权限访问该页面')
-          next("/")
-        } else {
-          ElMessage.error('未知角色')
-          next("/")
-        }
+      const userData = JSON.parse(userStr)
+      
+      // 检查缓存是否有效（页面刷新时也使用缓存，避免频繁请求）
+      const now = Date.now()
+      let role
+      if (roleCache && (now - roleCacheTime) < ROLE_CACHE_DURATION) {
+        // 使用内存缓存的角色
+        role = roleCache
+      } else if (userData.role) {
+        // 缓存失效，优先使用localStorage中的role（页面刷新时）
+        role = userData.role
+        // 异步更新后端验证（不阻塞页面加载）
+        request.post("/role", {}, { skipAuthError: true })
+          .then(res => {
+            if (res.code === '200') {
+              roleCache = res.data
+              roleCacheTime = Date.now()
+              // 更新localStorage中的role
+              userData.role = res.data
+              localStorage.setItem('user', JSON.stringify(userData))
+            }
+          })
+          .catch(err => {
+            console.warn('角色验证请求失败:', err)
+          })
       } else {
-        // 查询身份失败
-        localStorage.removeItem("user");
-        ElMessage.error(res.msg || '登录状态已失效，请重新登录');
-        next('/login');
+        // localStorage中也没有role，必须从后端获取
+        const res = await request.post("/role", {}, { skipAuthError: true })
+        if (res.code === '200') {
+          role = res.data
+          // 更新缓存
+          roleCache = role
+          roleCacheTime = now
+          // 保存到localStorage
+          userData.role = role
+          localStorage.setItem('user', JSON.stringify(userData))
+        } else if (res.code === '401') {
+          // token失效，静默清除并跳转登录
+          localStorage.removeItem("user")
+          roleCache = null
+          roleCacheTime = 0
+          next('/login')
+          return
+        } else {
+          // 其他错误
+          localStorage.removeItem("user")
+          roleCache = null
+          roleCacheTime = 0
+          ElMessage.error(res.msg || '登录状态已失效，请重新登录')
+          next('/login')
+          return
+        }
+      }
+      
+      if (role === 'admin') {
+        // 管理员放行
+        next()
+      } else if (role === 'user') {
+        ElMessage.error('您没有权限访问该页面')
+        next("/")
+      } else {
+        ElMessage.error('未知角色')
+        next("/")
       }
     } catch (err) {
-      // 请求失败，清除本地存储并跳转登录
-      localStorage.removeItem("user");
-      console.error('角色验证失败:', err);
-      ElMessage.error('验证失败，请重新登录');
-      next('/login');
+      // 请求失败（网络错误等），尝试使用本地数据
+      console.warn('角色验证异常，使用本地数据:', err)
+      const userData = JSON.parse(localStorage.getItem("user") || '{}')
+      const role = userData.role || 'user'
+      
+      if (role === 'admin') {
+        next()
+      } else {
+        // 普通用户不能访问后台，但也不能无限跳转，放行后由页面处理
+        next()
+      }
     }
   } else {
     //不需要判断权限
     if (to.meta.requireLogin === true) {
-      const user = localStorage.getItem("user");
-      if (!user) {
-        next('/login');
-        return;
+      const userStr = localStorage.getItem("user")
+      if (!userStr) {
+        ElMessage.warning('请先登录')
+        next('/login')
+        return
+      }
+      // 进一步检查 token 字段是否存在（防止token已被清除但对象殳中）
+      try {
+        const user = JSON.parse(userStr)
+        if (!user || !user.token) {
+          localStorage.removeItem('user')
+          ElMessage.warning('登录已过期，请重新登录')
+          next('/login')
+          return
+        }
+      } catch (e) {
+        localStorage.removeItem('user')
+        next('/login')
+        return
       }
     }
     next()

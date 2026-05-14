@@ -40,13 +40,15 @@
         @click="save"><i class="iconfont icon-r-yes" style="font-size: 22px;"></i> 确定</el-button
       >
     </el-form>
-    <el-popover placement="right" width="200" trigger="click">
-      <el-form>
+    <el-popover placement="right" width="300" trigger="click">
+      <el-form label-width="80px">
         <el-form-item label="新密码">
           <el-input
             type="password"
             v-model="resetPsw.newPassword"
             autocomplete="off"
+            placeholder="6-12位，包含字母、数字和特殊符号"
+            show-password
           ></el-input>
         </el-form-item>
         <el-form-item label="确认密码">
@@ -54,19 +56,25 @@
             type="password"
             v-model="resetPsw.confirmPassword"
             autocomplete="off"
+            placeholder="请再次输入新密码"
+            show-password
           ></el-input>
         </el-form-item>
-        <el-button style="font-size: 15px;font-size: 20px;" type="primary" @click="toResetPassword"
-          ><i class="iconfont icon-r-yes" style="font-size: 22px;"></i> 确定</el-button
-        >
+        <div style="text-align: center; margin-top: 10px;">
+          <el-button type="primary" @click="toResetPassword" style="font-size: 16px;">
+            <i class="iconfont icon-r-yes" style="font-size: 18px;"></i> 确定修改
+          </el-button>
+        </div>
       </el-form>
-      <el-button
-        slot="reference"
-        type="warning"
-        style="margin-left: 190px; margin-top: 20px; font-size: 20px;"
-        @click="resetPsw = { newPassword: '', confirmPassword: '' }"
-        ><i class="iconfont icon-r-lock" style="font-size: 22px;"></i> 重置密码</el-button
-      >
+      <template #reference>
+        <el-button
+          type="warning"
+          style="margin-left: 190px; margin-top: 20px; font-size: 20px;"
+          @click="resetPsw = { newPassword: '', confirmPassword: '' }"
+        >
+          <i class="iconfont icon-r-lock" style="font-size: 22px;"></i> 重置密码
+        </el-button>
+      </template>
     </el-popover>
   </el-card>
 </template>
@@ -101,19 +109,31 @@ const token = computed(() => {
 })
 
 const toResetPassword = () => {
-  // 重置密码
-  if (resetPsw.value.newPassword.trim() == '') {
+  // 验证新密码
+  if (!resetPsw.value.newPassword || resetPsw.value.newPassword.trim() === '') {
     ElMessage.error('新密码不能为空')
     return
   }
+  
+  // 密码强度验证
   if (!passwordRule.test(resetPsw.value.newPassword)) {
     ElMessage.error('密码必须为6-12位，且同时包含字母、数字和特殊符号')
     return
   }
-  if (resetPsw.value.confirmPassword != resetPsw.value.newPassword) {
-    ElMessage.error('两次密码不一致')
+  
+  // 验证确认密码
+  if (!resetPsw.value.confirmPassword || resetPsw.value.confirmPassword.trim() === '') {
+    ElMessage.error('确认密码不能为空')
     return
   }
+  
+  // 两次密码一致性验证
+  if (resetPsw.value.confirmPassword !== resetPsw.value.newPassword) {
+    ElMessage.error('两次输入的密码不一致')
+    return
+  }
+  
+  // 发送修改密码请求
   request
     .post(
       '/user/resetPassword',
@@ -122,14 +142,27 @@ const toResetPassword = () => {
     )
     .then((res) => {
       if (res.code === '200') {
-        ElMessage.success('修改成功')
+        ElMessage.success('密码修改成功，请重新登录')
         resetPsw.value = {
           newPassword: '',
           confirmPassword: ''
         }
+        // 清除登录状态，跳转到登录页
+        localStorage.removeItem('user')
+        setTimeout(() => {
+          router.push('/login')
+        }, 1500)
+      } else if (res.code === '401') {
+        ElMessage.error('登录状态已失效，请重新登录')
+        localStorage.removeItem('user')
+        router.push('/login')
       } else {
-        alert(res.msg)
+        ElMessage.error(res.msg || '密码修改失败')
       }
+    })
+    .catch((err) => {
+      console.error('密码修改失败:', err)
+      ElMessage.error('网络错误，请稍后重试')
     })
 }
 
@@ -145,8 +178,12 @@ const save = () => {
     if (res.code === '200') {
       ElMessage.success('保存成功')
       //把表格的数据更新到user中
-      for (let key in form.value) {
-        user.value[key] = form.value[key]
+      if (form.value && typeof form.value === 'object') {
+        Object.keys(form.value).forEach(key => {
+          if (form.value[key] !== undefined) {
+            user.value[key] = form.value[key]
+          }
+        })
       }
       //更新localstorage的user
       localStorage.setItem('user', JSON.stringify(user.value))
@@ -194,10 +231,16 @@ onMounted(() => {
   height: 138px;
   line-height: 138px;
   text-align: center;
+  border: 3px dashed #409eff;  /* 蓝色虚线边框 */
+  border-radius: 6px;  /* 圆角 */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);  /* 轻微阴影 */
 }
 .avatar {
   width: 138px;
   height: 138px;
   display: block;
+  border: 3px solid #409eff;  /* 蓝色边框 */
+  border-radius: 6px;  /* 圆角 */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);  /* 阴影效果 */
 }
 </style>

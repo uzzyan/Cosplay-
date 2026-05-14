@@ -34,6 +34,11 @@ import java.util.stream.Collectors;
 import static com.rabbiter.em.constants.RedisConstants.GOOD_TOKEN_KEY;
 import static com.rabbiter.em.constants.RedisConstants.GOOD_TOKEN_TTL;
 
+/**
+ * 商品服务类
+ * @author uzzyan
+ */
+
 @Service
 public class GoodService extends ServiceImpl<GoodMapper, Good> {
 

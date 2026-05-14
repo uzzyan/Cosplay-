@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.rabbiter.em.service.TokenValidationTest
--------------------------------------------------------------------------------
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 18.716 s - in com.rabbiter.em.service.TokenValidationTest

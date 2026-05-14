@@ -76,14 +76,14 @@ const onSubmit = () => {
   }
   let form = {}
   Object.assign(form, user.value)
-  form.password = md5(user.value.password)
+  form.password = md5(user.value.password)  // MD5加密后发送
   
   request
     .post('/login', form)
     .then((res) => {
       if (res.code === '200') {
         localStorage.setItem('user', JSON.stringify(res.data))
-        ElMessage.success('登陆成功')
+        ElMessage.success('登录成功')
         // 根据用户角色决定跳转页面
         let redirectPath = to.value
         if (!to.value || to.value === '/') {

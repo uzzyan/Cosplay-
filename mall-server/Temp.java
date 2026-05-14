@@ -1,1 +1,0 @@
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder; public class Temp { public static void main(String[] args) { BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(); String md5Password = "ecd00aa1acd325ba7575cb0f638b04a5"; String bcryptPassword = encoder.encode(md5Password); System.out.println(bcryptPassword); } }

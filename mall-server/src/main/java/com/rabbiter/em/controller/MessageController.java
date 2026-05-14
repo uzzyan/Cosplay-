@@ -16,6 +16,11 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+/**
+ * 留言管理控制器
+ * @author uzzyan
+ */
+
 @Authority(AuthorityType.requireLogin)
 @RestController
 @RequestMapping("/api/message")

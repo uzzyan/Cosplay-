@@ -178,8 +178,8 @@ const saveAddress = () => {
 
 const loadAddress = () => {
   API.get('/userid').then((res) => {
-    userId.value = res
-    API.get('/api/address/' + res).then((res) => {
+    userId.value = res.data
+    API.get('/api/address/' + res.data).then((res) => {
       if (res.code === '200') {
         addressData.value = res.data
       }

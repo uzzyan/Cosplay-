@@ -1,13 +1,15 @@
 <template>
   <div>
     <div style="width: 60%; margin: 30px auto">
-      <el-button type="success" icon="iconfont icon-r-add" style="font-size: 20px;"
-        @click="addDialogFormVisible = true"> 新增上级分类</el-button>
-      <el-table :data="icons" stripe>
+      <el-button type="success" style="font-size: 20px;"
+        @click="addDialogFormVisible = true"> 
+        <i class="iconfont icon-r-add"></i>
+        新增上级分类</el-button>
+      <el-table :data="iconsList" stripe>
         <!-- 下级分类表-->
         <el-table-column type="expand" label="下级分类" width="100px">
           <template #default="scope">
-            <el-table :data="scope.row.categories" :header-cell-style="{ background: '#cbefea', color: 'black' }">
+            <el-table :data="scope.row.categories || []" :header-cell-style="{ background: '#cbefea', color: 'black' }">
               <el-table-column label="分类id" prop="id"></el-table-column>
               <el-table-column label="分类名称" prop="name"></el-table-column>
               <el-table-column label="操作" width="240">
@@ -34,14 +36,18 @@
 
         <el-table-column fixed="right" label="操作" width="200">
           <template #default="scope">
-            <el-button type="primary" style="font-size: 18px;" icon="iconfont icon-r-edit" circle
-              @click="handleEditIcon(scope.row)"></el-button>
-            <el-button type="success" icon="iconfont icon-r-add" style="font-size: 18px;" circle
-              @click="handleAddCategory(scope.row)"></el-button>
+            <el-button type="primary" style="font-size: 18px;" circle
+              @click="handleEditIcon(scope.row)"><i class="iconfont icon-r-edit"></i></el-button>
+            <el-button type="success"  style="font-size: 18px;" circle
+              @click="handleAddCategory(scope.row)">
+              <i class="iconfont icon-r-add"></i>
+            </el-button>
 
             <el-popconfirm @confirm="deleteIcon(scope.row.id)" title="确定删除？">
               <template #reference>
-                <el-button type="danger" icon="iconfont icon-r-delete" style="font-size: 18px;margin-left: 10px;" circle></el-button>
+                <el-button type="danger" style="font-size: 18px;margin-left: 10px;" circle>
+                  <i class="iconfont icon-r-delete"></i>
+                </el-button>
               </template>
             </el-popconfirm>
           </template>
@@ -111,7 +117,23 @@ const addDialogFormVisible = ref(false)
 
 const load = () => {
   API.get('/api/icon').then((res) => {
-    iconsList.value = res.data
+    if (res.code === '200') {
+      // 确保数据是数组,并且每个item的categories也是数组
+      iconsList.value = Array.isArray(res.data) ? res.data.map(item => ({
+        ...item,
+        categories: Array.isArray(item.categories) ? item.categories : []
+      })) : []
+    } else if (res.code === '401') {
+      ElMessage.error('登录状态已失效，请重新登录')
+      iconsList.value = []
+    } else {
+      ElMessage.error(res.msg || '加载数据失败')
+      iconsList.value = []
+    }
+  }).catch((err) => {
+    console.error('加载分类数据失败:', err)
+    ElMessage.error('加载失败，请检查网络连接')
+    iconsList.value = []
   })
 }
 

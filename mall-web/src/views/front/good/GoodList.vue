@@ -57,8 +57,8 @@
             :key="good.id"
             class="good-item"
           >
-            <router-link :to="'goodview/' + good.id">
-              <div class="good-card">
+            <div class="good-card">
+              <router-link :to="'/goodview/' + good.id" class="good-link">
                 <div class="image-wrapper">
                   <div class="soldout-badge" v-if="good.soldOut">售罄</div>
                   <img
@@ -74,8 +74,18 @@
                     <span class="price-value">{{ good.price }}</span>
                   </div>
                 </div>
+              </router-link>
+              <div class="cart-action">
+                <el-button
+                  type="primary"
+                  size="small"
+                  @click.stop="addToCart(good)"
+                  :disabled="good.soldOut"
+                >
+                  <i class="el-icon-shopping-cart-2"></i> 加入购物车
+                </el-button>
               </div>
-            </router-link>
+            </div>
           </div>
         </div>
 
@@ -144,7 +154,7 @@ const loadAll = () => {
   categoryId.value = null
   currentPage.value = 1
   router.push({
-    path: '/goodlist'
+    path: '/goodList'
   })
   load()
 }
@@ -186,6 +196,29 @@ const load = (categoryIdVal) => {
       console.error('加载商品失败:', err)
       ElMessage.error('加载商品失败，请重试')
     })
+}
+
+// 加入购物车
+const addToCart = (goodItem) => {
+  // 未登录，拦截
+  if (!localStorage.getItem('user')) {
+    ElMessage.warning('请先登录')
+    router.push({ path: '/login', query: { to: '/goodList' } })
+    return
+  }
+  
+  // 检查商品是否售罄
+  if (goodItem.soldOut) {
+    ElMessage.error('商品已售罄')
+    return
+  }
+  
+  // 跳转到商品详情页选择规格
+  ElMessage.info('请选择商品规格')
+  router.push({
+    path: '/goodview/' + goodItem.id,
+    query: { from: 'goodList' }  // 添加来源标记
+  })
 }
 
 // 监听路由变化，当从导航栏搜索时更新数据
@@ -376,6 +409,13 @@ onMounted(() => {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
   border: 1px solid #f0f0f0;
+  position: relative;
+}
+
+.good-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
 }
 
 .good-card:hover {
@@ -435,6 +475,25 @@ onMounted(() => {
 .price-value {
   font-size: 24px;
   font-weight: 700;
+}
+
+/* 购物车按钮 */
+.cart-action {
+  padding: 0 16px 16px;
+  display: flex;
+  justify-content: center;
+}
+
+.cart-action .el-button {
+  width: 100%;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.cart-action .el-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
 }
 
 /* 空状态 */

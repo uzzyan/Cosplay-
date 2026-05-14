@@ -31,6 +31,11 @@ import java.util.Map;
 
 import static com.rabbiter.em.constants.RedisConstants.GOOD_TOKEN_KEY;
 
+/**
+ * 订单服务类
+ * @author uzzyan
+ */
+
 @Service
 public class OrderService extends ServiceImpl<OrderMapper, Order> {
 

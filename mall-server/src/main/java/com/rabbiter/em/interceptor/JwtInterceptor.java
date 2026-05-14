@@ -27,6 +27,11 @@ import javax.servlet.http.HttpServletResponse;
 import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * JWT Token验证拦截器
+ * @author uzzyan
+ */
+
 /*
 第一层拦截器，验证用户token,把redis中的user存到threadlocal
  */

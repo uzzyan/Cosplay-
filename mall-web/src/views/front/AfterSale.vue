@@ -18,7 +18,27 @@
           </el-select>
         </el-form-item>
         <el-form-item label="申请原因">
-          <el-input type="textarea" :rows="4" v-model.trim="form.reason" maxlength="2000" show-word-limit></el-input>
+          <!-- 预设标签快速填写 -->
+          <div v-if="presetTags.length > 0" class="preset-tags">
+            <span class="preset-label">快速选择：</span>
+            <el-tag
+              v-for="tag in presetTags"
+              :key="tag"
+              class="preset-tag-item"
+              :type="form.reason && form.reason.includes(tag) ? 'success' : 'info'"
+              effect="plain"
+              @click="applyTag(tag)"
+              style="cursor: pointer; margin: 0 6px 6px 0"
+            >{{ tag }}</el-tag>
+          </div>
+          <el-input
+            type="textarea"
+            :rows="4"
+            v-model="form.reason"
+            maxlength="2000"
+            show-word-limit
+            :placeholder="form.type ? '可点击上方标签快速填写，也可直接输入原因' : '请先选择申请类型'"
+          ></el-input>
         </el-form-item>
         <el-form-item>
           <el-button type="success" @click="submit">提交申请</el-button>
@@ -84,7 +104,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import request from '@/utils/request'
@@ -103,6 +123,24 @@ const pageSize = ref(10)
 const total = ref(0)
 const detailVisible = ref(false)
 const detail = ref(null)
+
+// 根据申请类型返回对应的预设原因标签
+const PRESET_TAGS = {
+  退款: ['商品质量问题', '与描述不符', '拍错了', '不想要了', '卖家发错货', '长时间未收到货'],
+  售后: ['尺码不合适', '颜色与图片不符', '有质量瑕疵', '配件缺失', '需要维修', '收到时已损坏']
+}
+
+const presetTags = computed(() => PRESET_TAGS[form.value.type] || [])
+
+// 点击标签：若原因为空则直接填入，否则追加到末尾
+const applyTag = (tag) => {
+  const current = (form.value.reason || '').trim()
+  if (!current) {
+    form.value.reason = tag
+  } else if (!current.includes(tag)) {
+    form.value.reason = current + '；' + tag
+  }
+}
 
 const resetForm = () => {
   form.value = { orderNo: route.query.orderNo || '', type: '', reason: '' }
@@ -173,4 +211,30 @@ onMounted(() => {
 })
 </script>
 
-<style scoped></style>
+<style scoped>
+.preset-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  background: #f7f8fa;
+  border-radius: 6px;
+  border: 1px solid #e4e7ed;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.preset-label {
+  font-size: 13px;
+  color: #909399;
+  margin-right: 8px;
+  white-space: nowrap;
+}
+
+.preset-tag-item:hover {
+  opacity: 0.8;
+  transform: scale(1.03);
+  transition: all 0.15s;
+}
+</style>

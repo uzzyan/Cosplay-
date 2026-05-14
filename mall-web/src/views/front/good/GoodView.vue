@@ -19,7 +19,6 @@
                     <div style="margin-top: 8px">
                         <el-tag v-if="isOffShelf" type="info">已下架</el-tag>
                         <el-tag v-else-if="isSoldOutAll" type="danger">售罄</el-tag>
-                        <el-tag v-else type="success">上架</el-tag>
                     </div>
                 </div>
                 <div style="margin-top: 20px">
@@ -65,7 +64,7 @@
                     <span>{{ good.sales }}</span
                     ><br />
                     <span style="height: 40px" v-if="showStore"
-                        >库存：{{ store }}</span
+                        >库存：{{ storeCount > 0 ? storeCount : totalStore }}</span
                     >
 					<br>
                 </div>
@@ -146,10 +145,10 @@ const isDiscount = ref(false)
 const discount = ref('')
 const standards = ref([])
 const checkedStandard = ref('')
-const storeCount = ref(0)
+const storeCount = ref(0)  // 当前选中规格的库存
 const showStore = ref(false)
 const count = ref(1)
-const totalStore = ref(0)
+const totalStore = ref(0)  // 总库存
 
 const getPriceRange = (standardsArr) => {
   let arr = standardsArr.map((item) => {
@@ -209,29 +208,35 @@ const goToOrder = () => {
 }
 
 const addToCart = () => {
-  //未登录，拦截
+  //未登录,拦截
   if (!localStorage.getItem('user')) {
+    ElMessage.warning('请先登录')
     router.push('/login')
+    return
   }
   if (isOffShelf.value) {
     ElMessage.error('商品已下架')
-    return false
+    return
   }
   if (isSoldOutAll.value) {
     ElMessage.error('商品已售罄')
-    return false
+    return
   }
   if (!checkedStandard.value) {
     ElMessage.error('请选择规格')
-    return false
+    return
   }
   if (storeCount.value === 0) {
     ElMessage.error('该规格已售罄')
-    return false
+    return
   }
-  // 从服务器获取当前用户的id，保证安全
+  // 从服务器获取当前用户的id,保证安全
   API.get('/userid').then((res) => {
-    let userId = res
+    if (res.code !== '200') {
+      ElMessage.error('获取用户信息失败')
+      return
+    }
+    let userId = res.data
     let cart = {
       userId: userId,
       goodId: goodId.value,
@@ -240,9 +245,21 @@ const addToCart = () => {
     }
     API.post('/api/cart', cart).then((res) => {
       if (res.code === '200') {
-        ElMessage.success('成功添加购物车')
+        ElMessage.success('商品加入购物车成功')
+      } else if (res.code === '401') {
+        ElMessage.error('登录状态已失效,请重新登录')
+        localStorage.removeItem('user')
+        router.push('/login')
+      } else {
+        ElMessage.error(res.msg || '加入购物车失败')
       }
+    }).catch((err) => {
+      console.error('加入购物车失败:', err)
+      ElMessage.error('网络错误,请稍后重试')
     })
+  }).catch((err) => {
+    console.error('获取用户信息失败:', err)
+    ElMessage.error('获取用户信息失败')
   })
 }
 
@@ -270,9 +287,16 @@ const realPrice = computed(() => {
 })
 
 onMounted(() => {
+  // 检查登录状态
+  if (!localStorage.getItem('user')) {
+    ElMessage.warning('请先登录再查看商品详情')
+    router.push({ path: '/login', query: { to: route.fullPath } })
+    return
+  }
+  
   //初始化商品信息
   goodId.value = route.params.goodId
-  API.get('/api/good/' + goodId.value)
+  API.get('/api/good/detail/' + goodId.value)
     .then((res) => {
       if (res.code === '200') {
         good.value = res.data
@@ -282,11 +306,13 @@ onMounted(() => {
           discount.value = discountVal * 10 + '折'
         }
       } else {
-        router.go(0)
+        ElMessage.error(res.msg || '获取商品信息失败')
+        router.push('/')
       }
     })
     .catch((error) => {
-      ElMessage.error(error.response.data)
+      ElMessage.error('获取商品信息失败')
+      console.error(error)
     })
   //从服务器获取商品规格信息
   API.get('/api/good/standard/' + goodId.value)
@@ -305,7 +331,7 @@ onMounted(() => {
       }
     })
     .catch((error) => {
-      ElMessage.error(error.response.data)
+      console.error('获取规格信息失败', error)
     })
 })
 </script>

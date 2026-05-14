@@ -43,24 +43,36 @@
 
                 <div class="goods-grid">
                     <div
-                        v-for="good in good"
-                        :key="good.id"
+                        v-for="(item, index) in good"
+                        :key="item.id"
                         class="good-item"
                     >
-                        <router-link :to="'goodview/' + good.id">
+                        <router-link :to="'/goodview/' + item.id">
                             <div class="good-card">
                                 <div class="image-wrapper">
+                                    <!-- 算法推荐标签 -->
+                                    <div class="recommend-badge" v-if="index < 6">
+                                        <i class="el-icon-magic-stick"></i> 智能推荐
+                                    </div>
+                                    <!-- 热销标签 -->
+                                    <div class="hot-badge" v-else>
+                                        <i class="el-icon-fire"></i> 热销
+                                    </div>
                                     <img
-                                        :src="baseApi + good.imgs"
+                                        :src="baseApi + item.imgs"
                                         class="good-image"
                                         alt="商品图片"
                                     />
                                 </div>
                                 <div class="good-info">
-                                    <h3 class="good-name">{{ good.name }}</h3>
+                                    <h3 class="good-name">{{ item.name }}</h3>
                                     <div class="price-box">
                                         <span class="price-symbol">¥</span>
-                                        <span class="price-value">{{ good.price }}</span>
+                                        <span class="price-value">{{ item.price }}</span>
+                                    </div>
+                                    <div class="sales-info">
+                                        <i class="el-icon-shopping-cart-2"></i>
+                                        已售 {{ item.sales || 0 }} 件
                                     </div>
                                 </div>
                             </div>
@@ -104,16 +116,44 @@ const handleError = (e) => {
 }
 
 onMounted(() => {
-  request
-    .get('/api/good')
-    .then((res) => {
-      if (res.code === '200') {
-        good.value = res.data
-      } else {
-        ElMessage.error(res.msg)
-      }
-    })
-    .catch(handleError)
+  // 尝试获取个性化推荐
+  // 从 localStorage 获取用户信息
+  const userStr = localStorage.getItem('user')
+  let userId = null
+  
+  if (userStr) {
+    try {
+      const user = JSON.parse(userStr)
+      userId = user.id
+      console.log('✅ 检测到登录用户 ID:', userId)
+    } catch (e) {
+      console.error('解析用户信息失败:', e)
+    }
+  }
+  
+  if (userId) {
+    // 已登录: 使用个性化推荐
+    request.get(`/api/good/recommend/${userId}`)
+      .then((res) => {
+        if (res.code === '200') {
+          good.value = res.data
+          console.log('✅ 个性化推荐商品数:', res.data.length)
+        } else {
+          console.warn('推荐API返回错误:', res.msg)
+          // 降级: 获取所有商品
+          loadAllGoods()
+        }
+      })
+      .catch((err) => {
+        console.error('获取个性化推荐失败:', err)
+        // 降级: 获取所有商品
+        loadAllGoods()
+      })
+  } else {
+    // 未登录: 显示所有商品
+    console.log('ℹ️ 用户未登录,加载所有商品')
+    loadAllGoods()
+  }
     
   request
     .get('/api/icon')
@@ -136,6 +176,21 @@ onMounted(() => {
     })
     .catch(handleError)
 })
+
+// 加载所有商品(兜底方案)
+const loadAllGoods = () => {
+  request
+    .get('/api/good')
+    .then((res) => {
+      if (res.code === '200') {
+        good.value = res.data
+        console.log('✅ 加载所有商品数:', res.data.length)
+      } else {
+        ElMessage.error(res.msg)
+      }
+    })
+    .catch(handleError)
+}
 </script>
 
 <style scoped>
@@ -248,6 +303,50 @@ onMounted(() => {
     background: #f8f9fa;
 }
 
+/* 推荐标签 */
+.recommend-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 2;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.recommend-badge i {
+    font-size: 14px;
+}
+
+/* 热销标签 */
+.hot-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 2;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(245, 87, 108, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.hot-badge i {
+    font-size: 14px;
+}
+
 .good-image {
     width: 100%;
     height: 100%;
@@ -292,6 +391,21 @@ onMounted(() => {
 .price-value {
     font-size: 24px;
     font-weight: 700;
+}
+
+/* 销量信息 */
+.sales-info {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #909399;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.sales-info i {
+    font-size: 14px;
+    color: #409EFF;
 }
 
 /* 响应式 */

@@ -10,7 +10,7 @@
         </div>
         <el-button 
           type="primary" 
-          size="medium"
+          size="default"
           @click="addAddress"
           class="add-btn"
         >
@@ -41,7 +41,7 @@
         <p class="empty-desc">添加收货地址，让购物更便捷</p>
         <el-button 
           type="primary" 
-          size="medium"
+          size="default"
           @click="addAddress"
           class="empty-add-btn"
         >
@@ -95,10 +95,10 @@
         </el-form>
         <template #footer>
           <div class="dialog-footer">
-            <el-button @click="dialogFormVisible = false" size="medium">
+            <el-button @click="dialogFormVisible = false" size="default">
               <el-icon><Close /></el-icon> 取消
             </el-button>
-            <el-button type="primary" @click="saveAddress" size="medium">
+            <el-button type="primary" @click="saveAddress" size="default">
               <el-icon><Check /></el-icon> 确定
             </el-button>
           </div>
@@ -186,12 +186,15 @@ const saveAddress = () => {
 
 const loadAddress = () => {
   API.get('/userid').then((res) => {
-    userId.value = res
-    API.get('/api/address/' + res).then((res) => {
-      if (res.code === '200') {
-        addressData.value = res.data
-      }
-    })
+    // /userid 返回的是 Result 对象，需要取 res.data
+    if (res.code === '200') {
+      userId.value = res.data
+      API.get('/api/address/' + res.data).then((res) => {
+        if (res.code === '200') {
+          addressData.value = res.data || []
+        }
+      })
+    }
   })
 }
 

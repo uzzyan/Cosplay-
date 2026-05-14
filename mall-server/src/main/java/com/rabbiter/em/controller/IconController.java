@@ -18,6 +18,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/icon")
+@Authority(AuthorityType.noRequire)  // 图标浏览不需要登录
 public class IconController {
     @Resource
     private IconService iconService;

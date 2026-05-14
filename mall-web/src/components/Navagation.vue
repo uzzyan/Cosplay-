@@ -19,13 +19,13 @@
           <el-menu-item index="/goodList" class="menu-item"
             >所有商品</el-menu-item
           >
-          <el-menu-item index="/cart" class="menu-item"
+          <el-menu-item index="/cart" class="menu-item" v-show="loginStatus"
             >购物车</el-menu-item
           >
-          <el-menu-item index="/orderlist" class="menu-item"
+          <el-menu-item index="/orderlist" class="menu-item" v-show="loginStatus"
             >我的订单</el-menu-item
           >
-          <el-menu-item index="/addressManage" class="menu-item"
+          <el-menu-item index="/addressManage" class="menu-item" v-show="loginStatus"
             >地址管理</el-menu-item
           >
           <el-menu-item index="/message" class="menu-item" v-show="loginStatus"
@@ -49,15 +49,18 @@
             v-model="searchText"
             placeholder="搜索商品"
             @keyup.enter="handleSearch"
-            prefix-icon="el-icon-search"
-            size="medium"
+            size="default"
             clearable
           >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
             <template #append>
               <el-button
-                icon="Search"
                 @click="handleSearch"
-              ></el-button>
+              >
+                <el-icon><Search /></el-icon>
+              </el-button>
             </template>
           </el-input>
         </div>
@@ -68,11 +71,12 @@
           <span class="el-dropdown-link">
             <div style="display: inline-block">
               <img
-                v-if="user.avatarUrl != null"
+                v-if="loginStatus && user.avatarUrl"
                 :src="baseApi + user.avatarUrl"
                 class="avatar"
               />
-              {{ user.nickname }}
+              <el-icon v-else-if="!loginStatus" style="vertical-align: middle; margin-right: 5px;"><User /></el-icon>
+              {{ loginStatus ? user.nickname : '请登录' }}
               <i
                 class="el-icon-arrow-down el-icon--right"
                 style="margin-right: 5px"
@@ -82,19 +86,18 @@
           <!--          下拉菜单-->
           <template #dropdown>
             <el-dropdown-menu style="text-align: center">
-            <el-dropdown-item>
+            <el-dropdown-item v-if="!loginStatus">
               <!--              传给前端，登录后跳转页面的path为 "/"-->
               <div
                 @click="$router.push({ path: '/login', query: { to: '/' } })"
-                v-show="!loginStatus"
               >
                 登录
               </div>
             </el-dropdown-item>
-            <el-dropdown-item v-show="loginStatus">
+            <el-dropdown-item v-if="loginStatus">
               <div @click="$router.push('/person')">个人信息</div>
             </el-dropdown-item>
-            <el-dropdown-item v-show="loginStatus">
+            <el-dropdown-item v-if="loginStatus">
               <div @click="logout">退出</div>
             </el-dropdown-item>
           </el-dropdown-menu>
@@ -107,13 +110,15 @@
 
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, watch, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { Search, User } from '@element-plus/icons-vue'
 import { useStore } from 'vuex'
 
 const store = useStore()
 const router = useRouter()
+const route = useRoute()
 
 const props = defineProps({
   user: Object,
@@ -121,13 +126,64 @@ const props = defineProps({
   role: String
 })
 
+// 调试：监听 loginStatus 变化
+watch(() => props.loginStatus, (newVal) => {
+  console.log('Navagation.vue - loginStatus:', newVal)
+  console.log('Navagation.vue - user:', props.user)
+  console.log('Navagation.vue - role:', props.role)
+}, { immediate: true })
+
 const baseApi = store.state.baseApi
 const searchText = ref('')
+
+// 根据当前路由动态计算 activeIndex
+const activeIndex = computed(() => {
+  const path = route.path
+  
+  // 后台管理
+  if (path.startsWith('/manage')) {
+    return '/manage'
+  }
+  
+  // 购物车
+  if (path === '/cart') {
+    return '/cart'
+  }
+  
+  // 我的订单
+  if (path === '/orderlist') {
+    return '/orderlist'
+  }
+  
+  // 地址管理
+  if (path === '/addressManage') {
+    return '/addressManage'
+  }
+  
+  // 在线留言
+  if (path === '/message') {
+    return '/message'
+  }
+  
+  // 售后申请
+  if (path === '/afterSale') {
+    return '/afterSale'
+  }
+  
+  // 商品详情页也算在商品列表下
+  if (path.startsWith('/goodview') || path === '/goodList') {
+    return '/goodList'
+  }
+  
+  // 默认首页
+  return '/'
+})
 
 const logout = () => {
   localStorage.removeItem('user')
   ElMessage.success('退出成功')
-  router.push('/') // 使用路由跳转
+  // 退出后刷新页面，确保所有状态重置
+  window.location.href = '/'
 }
 
 const handleSearch = () => {

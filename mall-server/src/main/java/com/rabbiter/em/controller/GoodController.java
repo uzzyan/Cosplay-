@@ -13,8 +13,14 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import java.util.List;
 
+/**
+ * 商品控制器
+ * @author uzzyan
+ */
+
 @RestController
 @RequestMapping("/api/good")
+@Authority(AuthorityType.noRequire)  // 商品浏览不需要登录
 public class GoodController {
     @Resource
     private GoodService goodService;
@@ -42,7 +48,7 @@ public class GoodController {
      * @param good 商品实体
      * @return Result 保存成功的商品ID
      */
-    @Authority(AuthorityType.requireAuthority)
+    @Authority(AuthorityType.requireAuthority)  // 需要管理员权限
     @PostMapping
     public Result save(@RequestBody Good good) {
         return Result.success(goodService.saveOrUpdateGood(good));
@@ -54,7 +60,7 @@ public class GoodController {
      * @param good 商品实体
      * @return Result 操作结果
      */
-    @Authority(AuthorityType.requireAuthority)
+    @Authority(AuthorityType.requireAuthority)  // 需要管理员权限
     @PutMapping
     public Result update(@RequestBody Good good) {
         goodService.update(good);
@@ -123,7 +129,7 @@ public class GoodController {
      * @param goodId 商品ID
      * @return Result 操作结果
      */
-    @Authority(AuthorityType.requireAuthority)
+    @Authority(AuthorityType.requireAuthority)  // 需要管理员权限
     @PostMapping("/standard")
     public Result saveStandard(@RequestBody List<Standard> standards, @RequestParam int goodId) {
         // 先删除全部旧记录

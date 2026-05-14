@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="demo-input-size">
-      <el-input placeholder="请输入文件名" prefix-icon="iconfont icon-r-find" style="width: 250px;padding-right: 5px" v-model="fileName"></el-input>
+      <el-input placeholder="请输入文件名" prefix-icon="Search" style="width: 250px;padding-right: 5px" v-model="fileName"></el-input>
       <el-button type="primary" @click="search">
         
         搜索
@@ -27,7 +27,7 @@
       <el-table-column prop="type" label="文件类型" width="180" ></el-table-column>
       <el-table-column prop="size" label="文件大小" width="180" ></el-table-column>
       <el-table-column label="操作" width="240" fixed="right">
-        <template slot-scope="scope">
+        <template #default="scope">
 
 <!--          下载-->
           <a :href="baseApi + scope.row.url">
@@ -64,143 +64,132 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useStore } from 'vuex'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import request from '@/utils/request'
 
-export default {
-  name: "File",
-  created() {
-    this.load();
-  },
-  data(){
-    return{
-      baseApi: this.$store.state.baseApi,
-      tableData: [],
-      total: 0,
-      pageSize: 5,
-      currentPage: 1,
-      fileName: '',
+const store = useStore()
+const baseApi = store.state.baseApi
 
-      multipleSelection: []
+const tableData = ref([])
+const total = ref(0)
+const pageSize = ref(5)
+const currentPage = ref(1)
+const fileName = ref('')
+const multipleSelection = ref([])
+
+const load = () => {
+  request.get('/file/page', {
+    params: {
+      pageNum: currentPage.value,
+      pageSize: pageSize.value,
+      fileName: fileName.value
     }
-  },
-  methods:{
-    handleSizeChange(pageSize){
-      this.pageSize = pageSize;
-      this.load();
-    },
-    handleCurrentPage(currentPage){
-      this.currentPage = currentPage;
-      this.load();
-    },
-    handleSelectionChange(val){
-      this.multipleSelection = val
-    },
-    handleFileUploadSuccess() {
-      this.$message.success("上传成功");
-      this.load();
-    },
-    handleEnable(row){
-      this.request.get("/file/enable",{params:{"id": row.id, "enable": row.enable}}).then(res=>{
-        if(res.code==='200'){
-          this.$message({
-            type: "success",
-            message: "修改成功",
-            duration: 3000
-          });
-          this.load();
-        }else {
-          this.$message.error(res.msg);
+  }).then(res => {
+    if (res.code === '200') {
+      // 确保数据是数组
+      tableData.value = Array.isArray(res.data.records) ? res.data.records : []
+      for (let s of tableData.value) {
+        let size = s.size
+        if (size < 1024) {
+          s.size = size + ' Kb'
+        } else if (size > 1024 && size < 1024 * 1024) {
+          s.size = (size / 1024).toFixed(2) + ' Mb'
+        } else {
+          s.size = (size / 1024 / 1024).toFixed(2) + ' Gb'
         }
-      })
-    },
-    load(){
-      this.request.get("/file/page",{
-        params:{
-          pageNum: this.currentPage,
-          pageSize: this.pageSize,
-          fileName: this.fileName,
-        }
-      }).then(res=>{
-            if(res.code==='200'){
-              this.tableData = res.data.records;
-              for(let s of this.tableData){
-                let size = s.size;
-                if(size<1024){
-                  s.size = size+' Kb';
-                }else if(size >1024 && size < 1024*1024){
-                  s.size = (size / 1024).toFixed(2) +' Mb'
-                }else{
-                  s.size = size /1024/1024 .toFixed(2)+' Gb'
-                }
-              }
-              this.total = res.data.total;
-              
-            }
-          }
-      )
-    },
-    search(){
-      this.currentPage = 1;
-      this.load();
-    },
-    reload(){
-      this.fileName='';
-      this.load()
-    },
-    // //编辑
-    // handleEdit(row){
-    //   this.user = JSON.parse(JSON.stringify(row));
-    //   this.dialogTitle='编辑用户';
-    //   this.dialogFormVisible = true;
-    // },
-
-    //删除
-    handleDelete(id){
-      this.$confirm('确认删除该文件吗?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        this.request.delete("/file/"+id).then(res=>{
-          if(res.code==='200'){
-            this.$message({
-              type: "success",
-              message: "删除成功",
-              duration: 3000
-            });
-            this.load();
-          }else {
-            this.$message.error(res.msg);
-          }
-        })
-      })
-    },
-    //批量删除
-    delBatch(){
-      let ids = this.multipleSelection.map(v => v.id);
-      this.$confirm('确认删除这些用户吗?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        this.request.post("/file/del/batch",ids).then(res=>{
-          if(res.code==='200'){
-            this.$message({
-              type: "success",
-              message: "删除成功",
-              duration: 3000
-            });
-            this.load();
-          }else {
-            this.$message.error(res.msg);
-          }
-        })
-
-      })
-
+      }
+      total.value = res.data.total || 0
+    } else if (res.code === '401') {
+      ElMessage.error('登录状态已失效，请重新登录')
+      tableData.value = []
+      total.value = 0
+    } else {
+      ElMessage.error(res.msg || '加载数据失败')
+      tableData.value = []
+      total.value = 0
     }
-  },
+  }).catch(err => {
+    console.error('加载文件列表失败:', err)
+    ElMessage.error('加载失败，请检查网络连接')
+    tableData.value = []
+    total.value = 0
+  })
 }
+
+const handleSizeChange = (newPageSize) => {
+  pageSize.value = newPageSize
+  load()
+}
+
+const handleCurrentPage = (newCurrentPage) => {
+  currentPage.value = newCurrentPage
+  load()
+}
+
+const handleSelectionChange = (val) => {
+  multipleSelection.value = val
+}
+
+const handleFileUploadSuccess = () => {
+  ElMessage.success('上传成功')
+  load()
+}
+
+const search = () => {
+  currentPage.value = 1
+  load()
+}
+
+const reload = () => {
+  fileName.value = ''
+  load()
+}
+
+const handleDelete = (id) => {
+  ElMessageBox.confirm('确认删除该文件吗?', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    request.delete('/file/' + id).then(res => {
+      if (res.code === '200') {
+        ElMessage.success('删除成功')
+        load()
+      } else {
+        ElMessage.error(res.msg)
+      }
+    })
+  }).catch(() => {
+    // 用户取消删除
+  })
+}
+
+const delBatch = () => {
+  let ids = multipleSelection.value.map(v => v.id)
+  ElMessageBox.confirm('确认删除这些文件吗?', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    request.post('/file/del/batch', ids).then(res => {
+      if (res.code === '200') {
+        ElMessage.success('删除成功')
+        load()
+      } else {
+        ElMessage.error(res.msg)
+      }
+    })
+  }).catch(() => {
+    // 用户取消删除
+  })
+}
+
+onMounted(() => {
+  load()
+})
 </script>
 
 <style scoped>

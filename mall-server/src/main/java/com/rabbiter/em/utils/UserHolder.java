@@ -2,6 +2,11 @@ package com.rabbiter.em.utils;
 
 import com.rabbiter.em.entity.User;
 
+/**
+ * 用户ThreadLocal存储工具类
+ * @author uzzyan
+ */
+
 public class UserHolder {
     private static final ThreadLocal<User> userThreadLocal = new ThreadLocal<>();
 

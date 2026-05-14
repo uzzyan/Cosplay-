@@ -12,6 +12,11 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 
+/**
+ * 售后管理控制器
+ * @author uzzyan
+ */
+
 @Authority(AuthorityType.requireLogin)
 @RestController
 @RequestMapping("/api/afterSale")

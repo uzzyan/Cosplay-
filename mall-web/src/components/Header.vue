@@ -8,7 +8,7 @@
     <span style="font-size: 25px;cursor: pointer;margin-left: 10px" class='iconfont icon-r-left' v-on:click="back" title="返回"></span>
 <!--    页签-->
     <el-breadcrumb style="display: inline-block; margin-left: 30px;font-size: 22px">
-      <el-breadcrumb-item :to="{ path: '/manage/home' }">首页</el-breadcrumb-item>
+      <el-breadcrumb-item @click="router.push('/manage/home')">首页</el-breadcrumb-item>
       <el-breadcrumb-item>{{routePath}}</el-breadcrumb-item>
     </el-breadcrumb>
     </div>

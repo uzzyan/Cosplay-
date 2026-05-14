@@ -11,11 +11,6 @@ spring:
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3309}/${DB_NAME:s003}?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&characterEncoding=utf-8&connectionCollation=utf8mb4_0900_ai_ci
     username: ${DB_USER:root}
     password: ${DB_PASS:123456}
-  http:
-    encoding:
-      charset: UTF-8
-      enabled: true
-      force: true
   servlet:
     multipart:
       max-file-size: 30MB

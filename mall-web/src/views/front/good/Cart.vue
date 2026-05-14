@@ -16,7 +16,7 @@
       <i class="el-icon-shopping-cart-full empty-icon"></i>
       <p class="empty-title">购物车是空的哦</p>
       <p class="empty-desc">快去选购心仪的商品吧~</p>
-      <el-button type="primary" size="medium" @click="router.push('/goodList')" round>
+      <el-button type="primary" size="default" @click="router.push('/goodList')" round>
         去逛逛
       </el-button>
     </div>
@@ -37,6 +37,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import CartItem from '@/components/CartItem.vue'
 import request from '@/utils/request'
 
@@ -46,12 +47,26 @@ const userId = ref(0)
 const carts = ref([])
 
 const delItem = (id) => {
-  carts.value = carts.value.filter(item => item.id != id)
+  // 调用后端API删除购物车项
+  request.delete('/api/cart/' + id)
+    .then(res => {
+      if (res.code === '200') {
+        // 删除成功后更新本地状态
+        carts.value = carts.value.filter(item => item.id != id)
+        ElMessage.success('删除成功')
+      } else {
+        ElMessage.error(res.msg || '删除失败')
+      }
+    })
+    .catch(err => {
+      console.error('删除购物车项失败:', err)
+      ElMessage.error('删除失败，请重试')
+    })
 }
 
 onMounted(() => {
   request.get('/userid').then(res => {
-    userId.value = res
+    userId.value = res.data
     request.get('/api/cart/userid/' + userId.value).then(res => {
       if (res.code === '200') {
         carts.value = res.data

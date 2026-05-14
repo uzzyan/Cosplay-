@@ -51,19 +51,27 @@ onMounted(() => {
       console.warn('localStorage 中未找到 role 字段')
     }
     // 异步向后端确认角色（作为二次校验，不依赖此结果做首次渲染）
-    request.post('/role').then(res => {
+    // skipAuthError: true 表示由本组件自行处理401，不让 request.js 全局跳转登录
+    request.post('/role', {}, { skipAuthError: true }).then(res => {
       if (res.code === '200') {
         role.value = res.data
         console.log('从后端 /role 接口获取到 role:', role.value)
         getUser()
+      } else if (res.code === '401') {
+        // token失效，清除登录状态
+        console.warn('token已失效，清除登录状态')
+        localStorage.removeItem('user')
+        loginStatus.value = false
+        user.value = { nickname: '', avatarUrl: null }
+        role.value = 'user'
       }
-      // 非200时不清除登录态，保留 localStorage 中的角色
+      // 其他错误时不清除登录态，保留 localStorage 中的角色
     }).catch((error) => {
       console.error('获取 role 失败:', error)
       // 网络异常时保留 localStorage 中的状态
     })
   } else {
-    user.value = { nickname: '您未登录', avatarUrl: null }
+    user.value = { nickname: '', avatarUrl: null }
     loginStatus.value = false
   }
 })

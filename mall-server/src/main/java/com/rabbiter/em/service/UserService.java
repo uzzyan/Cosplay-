@@ -23,6 +23,11 @@ import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
+/**
+ * 用户服务类
+ * @author uzzyan
+ */
+
 
 @Service
 public class UserService extends ServiceImpl<UserMapper, User> {
@@ -53,15 +58,21 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         boolean matched = false;
         if (storedPassword.startsWith("$2a$") || storedPassword.startsWith("$2b$")) {
             // BCrypt 格式密码
-            matched = PASSWORD_ENCODER.matches(rawPassword, storedPassword);
+            String md5Password = cn.hutool.crypto.digest.DigestUtil.md5Hex(rawPassword);
+            matched = PASSWORD_ENCODER.matches(md5Password, storedPassword);
+
         } else {
-            // 旧 MD5 格式密码（前端传来的就是 MD5），直接比较
-            matched = storedPassword.equals(rawPassword);
-            if (matched) {
-                // 透明升级：将旧 MD5 密码迁移为 BCrypt
-                user.setPassword(PASSWORD_ENCODER.encode(rawPassword));
-                this.updateById(user);
-            }
+            // 旧 MD5 格式密码，需要手动重置为新格式
+            throw new ServiceException("403", "密码格式已升级，请联系管理员重置密码");
+            // // 旧 MD5 格式密码（前端传来的就是 MD5），直接比较
+            // matched = storedPassword.equals(rawPassword);
+            // if (matched) {
+            //     // 透明升级：将旧 MD5 密码迁移为 BCrypt
+            //     user.setPassword(PASSWORD_ENCODER.encode(rawPassword));
+            //     // 改为：明文 → MD5 → BCrypt
+            //
+            //     this.updateById(user);
+            // }
         }
         if (!matched) {
             throw new ServiceException(Constants.CODE_403, "用户名或密码错误");
@@ -85,7 +96,7 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         if (password == null || password.trim().isEmpty()) {
             throw new ServiceException("400", "密码不能为空");
         }
-        validatePassword(password);
+        //validatePassword(password);
         if (phone == null || phone.trim().isEmpty()) {
             throw new ServiceException("400", "联系方式不能为空");
         }
@@ -99,7 +110,8 @@ public class UserService extends ServiceImpl<UserMapper, User> {
             user = new User();
             BeanUtils.copyProperties(loginForm, user);
             // 服务端 BCrypt 加密（前端仍传 MD5，服务端再加密）
-            user.setPassword(PASSWORD_ENCODER.encode(password));
+            String md5Password = cn.hutool.crypto.digest.DigestUtil.md5Hex(password);
+            user.setPassword(PASSWORD_ENCODER.encode(md5Password));
             user.setNickname("新用户");
             user.setRole("user");
             save(user);
@@ -130,7 +142,9 @@ public class UserService extends ServiceImpl<UserMapper, User> {
             }
             if (user.getNewPassword() != null) {
                 validatePassword(user.getNewPassword());
-                user.setPassword(PASSWORD_ENCODER.encode(user.getNewPassword()));
+                //user.setPassword(PASSWORD_ENCODER.encode(user.getNewPassword()));
+                String md5New = cn.hutool.crypto.digest.DigestUtil.md5Hex(user.getNewPassword());
+                user.setPassword(PASSWORD_ENCODER.encode(md5New));
             }
             super.save(user);
             return Result.success("新增成功");
@@ -148,7 +162,9 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         if (user == null) {
             return;
         }
-        user.setPassword(PASSWORD_ENCODER.encode(newPassword));
+        //user.setPassword(PASSWORD_ENCODER.encode(newPassword));
+        String md5New = cn.hutool.crypto.digest.DigestUtil.md5Hex(newPassword);
+        user.setPassword(PASSWORD_ENCODER.encode(md5New));
         this.updateById(user);
     }
 }

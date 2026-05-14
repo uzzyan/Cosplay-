@@ -70,28 +70,28 @@
           v-if="order.state==='已发货'"
           type="success"
           effect="plain"
-          size="medium"
+          size="default"
         >
           <i class="el-icon-truck"></i> {{ order.state }}
         </el-tag>
         <el-tag
           v-else-if="order.state==='已收货'"
           type="success"
-          size="medium"
+          size="default"
         >
           <i class="el-icon-check"></i> {{ order.state }}
         </el-tag>
         <el-tag
           v-else-if="order.state==='已支付'"
           type="primary"
-          size="medium"
+          size="default"
         >
           <i class="el-icon-circle-check"></i> {{ order.state }}
         </el-tag>
         <el-tag
           v-else
           type="warning"
-          size="medium"
+          size="default"
         >
           <i class="el-icon-warning"></i> {{ order.state }}
         </el-tag>
@@ -104,7 +104,7 @@
         v-if="order.state==='已发货'"
         type="primary"
         @click="receive"
-        size="medium"
+        size="default"
         round
       >
         <el-icon><Check /></el-icon>
@@ -115,7 +115,7 @@
         type="info"
         plain
         disabled
-        size="medium"
+        size="default"
         round
       >
         待发货
@@ -124,7 +124,7 @@
         v-else-if="order.state!=='已收货'"
         type="success"
         @click="pay"
-        size="medium"
+        size="default"
         round
       >
         <el-icon><Wallet /></el-icon>

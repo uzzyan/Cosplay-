@@ -8,20 +8,20 @@ import com.baomidou.mybatisplus.annotation.TableName;
 @TableName("sys_file")
 public class MyFile {
     @TableId(type = IdType.AUTO)
-    private int id;
+    private Integer id;  // 使用包装类Integer而非primitive类型int
     private String name;
     private String type;
-    private long size;
+    private Long size;  // 使用包装类Long
     private String url;
     @TableField("is_delete")
-    private boolean isDelete;
-    private boolean enable;
+    private Boolean isDelete;  // 使用包装类Boolean
+    private Boolean enable;  // 使用包装类Boolean
     private String md5;
 
     public MyFile() {
     }
 
-    public MyFile(int id, String name, String type, long size, String url, boolean isDelete, boolean enable, String md5) {
+    public MyFile(Integer id, String name, String type, Long size, String url, Boolean isDelete, Boolean enable, String md5) {
         this.id = id;
         this.name = name;
         this.type = type;
@@ -32,11 +32,11 @@ public class MyFile {
         this.md5 = md5;
     }
 
-    public int getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
@@ -56,11 +56,11 @@ public class MyFile {
         this.type = type;
     }
 
-    public long getSize() {
+    public Long getSize() {
         return size;
     }
 
-    public void setSize(long size) {
+    public void setSize(Long size) {
         this.size = size;
     }
 
@@ -72,19 +72,19 @@ public class MyFile {
         this.url = url;
     }
 
-    public boolean isDelete() {
+    public Boolean getIsDelete() {
         return isDelete;
     }
 
-    public void setDelete(boolean delete) {
+    public void setIsDelete(Boolean delete) {
         isDelete = delete;
     }
 
-    public boolean isEnable() {
+    public Boolean getEnable() {
         return enable;
     }
 
-    public void setEnable(boolean enable) {
+    public void setEnable(Boolean enable) {
         this.enable = enable;
     }
 

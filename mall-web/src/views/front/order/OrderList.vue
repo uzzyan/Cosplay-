@@ -16,7 +16,7 @@
       <i class="el-icon-folder-opened empty-icon"></i>
       <p class="empty-title">没有订单记录</p>
       <p class="empty-desc">您还没有购买过商品哦~</p>
-      <el-button type="primary" size="medium" @click="router.push('/goodList')" round>
+      <el-button type="primary" size="default" @click="router.push('/goodList')" round>
         去购物
       </el-button>
     </div>
@@ -24,7 +24,7 @@
     <!-- 订单列表 -->
     <div v-else class="order-list">
       <div style="display: flex; justify-content: flex-end">
-        <el-button type="success" size="medium" @click="router.push('/afterSale')" round>退款 / 售后申请</el-button>
+        <el-button type="success" size="default" @click="router.push('/afterSale')" round>退款 / 售后申请</el-button>
       </div>
       <order-item
         v-for="order in orders"
@@ -48,7 +48,7 @@ const orders = ref({})
 
 onMounted(() => {
   API.get('/userid').then(res => {
-    API.get('/api/order/userid/' + res).then(res => {
+    API.get('/api/order/userid/' + res.data).then(res => {
       if (res.code === '200') {
         orders.value = res.data
         for (var i = 0; i < orders.value.length; ++i) {

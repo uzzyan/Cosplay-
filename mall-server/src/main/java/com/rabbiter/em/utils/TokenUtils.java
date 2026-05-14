@@ -15,6 +15,11 @@ import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Objects;
 
+/**
+ * Token工具类
+ * @author uzzyan
+ */
+
 @Component
 public class TokenUtils {
 

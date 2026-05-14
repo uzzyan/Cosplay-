@@ -9,6 +9,11 @@ import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 购物车服务类
+ * @author uzzyan
+ */
+
 @Service
 public class CartService extends ServiceImpl<CartMapper, Cart> {
 

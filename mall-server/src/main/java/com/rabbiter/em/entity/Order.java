@@ -8,6 +8,11 @@ import com.baomidou.mybatisplus.annotation.TableId;
 
 import java.math.BigDecimal;
 
+/**
+ * 订单实体类
+ * @author uzzyan
+ */
+
 @TableName("t_order")
 public class Order extends Model<Order> {
     /**

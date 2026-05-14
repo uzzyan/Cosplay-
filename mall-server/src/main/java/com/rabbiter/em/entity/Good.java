@@ -8,6 +8,11 @@ import com.baomidou.mybatisplus.annotation.TableId;
 
 import java.math.BigDecimal;
 
+/**
+ * 商品实体类
+ * @author uzzyan
+ */
+
 @TableName("good")
 public class Good extends Model<Good> {
     /**
