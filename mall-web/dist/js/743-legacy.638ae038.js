@@ -1,2 +1,0 @@
-"use strict";(self["webpackChunkvue"]=self["webpackChunkvue"]||[]).push([[743],{6743:function(e,t,p){p.r(t),p.d(t,{default:function(){return w}});var n=p(89584),x=p(73396),i={style:{"text-align":"center",width:"100%","font-size":"32px"}};function r(e,t){return(0,x.wg)(),(0,x.iD)("div",i,(0,n.Z)(t[0]||(t[0]=[(0,x._)("h1",{style:{"text-shadow":"1px 1px 1px white, -1px -1px 1px white, 1px -1px 1px white, -1px 1px 1px white"}},"欢迎访问购物商城系统",-1)])))}var u=p(40089);const h={},s=(0,u.Z)(h,[["render",r]]);var w=s}}]);
-//# sourceMappingURL=743-legacy.638ae038.js.map
