@@ -64,15 +64,7 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         } else {
             // 旧 MD5 格式密码，需要手动重置为新格式
             throw new ServiceException("403", "密码格式已升级，请联系管理员重置密码");
-            // // 旧 MD5 格式密码（前端传来的就是 MD5），直接比较
-            // matched = storedPassword.equals(rawPassword);
-            // if (matched) {
-            //     // 透明升级：将旧 MD5 密码迁移为 BCrypt
-            //     user.setPassword(PASSWORD_ENCODER.encode(rawPassword));
-            //     // 改为：明文 → MD5 → BCrypt
-            //
-            //     this.updateById(user);
-            // }
+
         }
         if (!matched) {
             throw new ServiceException(Constants.CODE_403, "用户名或密码错误");

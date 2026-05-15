@@ -81,11 +81,13 @@
       <el-menu-item index="/manage/incomeRank" v-if="menuFlags.incomeRankMenu">收入数据</el-menu-item>
     </el-sub-menu>
 
-    <!-- 前台 -->
+    <!-- 前台首页入口已隐藏 -->
+    <!--
     <el-menu-item index="/" class="el-item-menu" style="font-size: 16px">
       <el-icon style="font-size: 20px;color: #606266;"><HomeFilled /></el-icon>
       <span>前台首页</span>
     </el-menu-item>
+    -->
   </el-menu>
 </template>
 

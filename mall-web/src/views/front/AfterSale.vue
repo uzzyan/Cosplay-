@@ -8,16 +8,16 @@
       </template>
 
       <el-form label-width="90px">
-        <el-form-item label="订单编号">
+        <el-form-item label="订单编号" required>
           <el-input v-model.trim="form.orderNo" maxlength="64"></el-input>
         </el-form-item>
-        <el-form-item label="申请类型">
+        <el-form-item label="申请类型" required>
           <el-select v-model="form.type" placeholder="请选择" style="width: 200px">
             <el-option label="退款" value="退款"></el-option>
             <el-option label="售后" value="售后"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="申请原因">
+        <el-form-item label="申请原因" required>
           <!-- 预设标签快速填写 -->
           <div v-if="presetTags.length > 0" class="preset-tags">
             <span class="preset-label">快速选择：</span>

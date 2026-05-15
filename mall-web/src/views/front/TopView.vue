@@ -24,6 +24,23 @@
                 </el-carousel>
             </div>
 
+            <!-- Fix3: 公告模块 -->
+            <div class="notice-section" v-if="notices.length > 0">
+                <div class="section-header">
+                    <h2 class="section-title">📢 平台公告</h2>
+                </div>
+                <el-collapse accordion>
+                    <el-collapse-item
+                        v-for="notice in notices"
+                        :key="notice.id"
+                        :title="notice.title + '  ' + notice.createTime"
+                        :name="notice.id"
+                    >
+                        <div class="notice-content">{{ notice.content }}</div>
+                    </el-collapse-item>
+                </el-collapse>
+            </div>
+
             <!-- 推荐商品区域 -->
             <div class="recommend-section">
                 <div class="section-header">
@@ -97,6 +114,7 @@ const router = useRouter()
 const carousels = ref([])
 const good = ref([])
 const icons = ref([])
+const notices = ref([])  // Fix3: 公告列表
 const baseApi = store.state.baseApi
 
 const handleError = (e) => {
@@ -175,6 +193,16 @@ onMounted(() => {
       }
     })
     .catch(handleError)
+
+  // Fix3: 加载公告列表
+  request
+    .get('/api/notice')
+    .then((res) => {
+      if (res.code === '200') {
+        notices.value = res.data
+      }
+    })
+    .catch(handleError)
 })
 
 // 加载所有商品(兜底方案)
@@ -196,6 +224,30 @@ const loadAllGoods = () => {
 <style scoped>
 .top-view-container {
     padding: 30px 0;
+}
+
+/* Fix3: 公告模块样式 */
+.notice-section {
+    margin: 24px 0;
+    background: #fff7e6;
+    border-left: 4px solid #f5a623;
+    border-radius: 6px;
+    padding: 16px 20px;
+}
+.notice-section .section-header {
+    margin-bottom: 12px;
+}
+.notice-section .section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #e6820a;
+    margin: 0;
+}
+.notice-content {
+    padding: 8px 0;
+    color: #555;
+    line-height: 1.7;
+    white-space: pre-wrap;
 }
 
 .content-wrapper {

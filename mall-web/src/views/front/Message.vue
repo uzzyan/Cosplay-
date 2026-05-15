@@ -8,16 +8,16 @@
       </template>
 
       <el-form label-width="90px">
-        <el-form-item label="标题">
+        <el-form-item label="标题" required>
           <el-input v-model.trim="form.title" maxlength="200" show-word-limit></el-input>
         </el-form-item>
-        <el-form-item label="联系方式">
+        <el-form-item label="联系方式" required>
           <el-input v-model.trim="form.contact" maxlength="50"></el-input>
         </el-form-item>
         <el-form-item label="定制意愿">
           <el-switch v-model="form.customIntent" active-text="有" inactive-text="无"></el-switch>
         </el-form-item>
-        <el-form-item label="内容">
+        <el-form-item label="内容" required>
           <el-input
             type="textarea"
             :rows="5"

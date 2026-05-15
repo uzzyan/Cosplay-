@@ -86,20 +86,12 @@
           <!--          下拉菜单-->
           <template #dropdown>
             <el-dropdown-menu style="text-align: center">
-            <el-dropdown-item v-if="!loginStatus">
+            <el-dropdown-item v-if="!loginStatus" @click="$router.push({ path: '/login', query: { to: '/' } })">
               <!--              传给前端，登录后跳转页面的path为 "/"-->
-              <div
-                @click="$router.push({ path: '/login', query: { to: '/' } })"
-              >
-                登录
-              </div>
+              登录
             </el-dropdown-item>
-            <el-dropdown-item v-if="loginStatus">
-              <div @click="$router.push('/person')">个人信息</div>
-            </el-dropdown-item>
-            <el-dropdown-item v-if="loginStatus">
-              <div @click="logout">退出</div>
-            </el-dropdown-item>
+            <el-dropdown-item v-if="loginStatus" @click="$router.push('/person')">个人信息</el-dropdown-item>
+            <el-dropdown-item v-if="loginStatus" @click="logout">退出</el-dropdown-item>
           </el-dropdown-menu>
           </template>
         </el-dropdown>

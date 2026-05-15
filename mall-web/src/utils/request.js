@@ -40,9 +40,9 @@ request.interceptors.response.use(
             localStorage.removeItem("user");
             if (!response.config.skipAuthError) {
                 ElMessage.warning(res.msg || '登录状态已失效，请重新登录');
-                // 立即跳转登录页（不在登录页时才跳）
+                // Fix4: 用 replace 代替 push，防止登录页被加入历史堆导致返回按鈕失效
                 if (router.currentRoute.value.path !== '/login') {
-                    router.push('/login')
+                    router.replace('/login')
                 }
             }
         }

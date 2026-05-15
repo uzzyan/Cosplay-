@@ -38,7 +38,7 @@ public class TokenUtils {
     private static final long TOKEN_EXPIRE_MS = 24 * 60 * 60 * 1000L;
 
     public static String genToken(String userId, String username){
-        // Bug7修复：添加 JWT 过期时间（24h），防止 Token 永久有效
+        // 添加 JWT 过期时间（24h），防止 Token 永久有效
         String token = JWT.create()
                 .withAudience(userId)
                 .withExpiresAt(new Date(System.currentTimeMillis() + TOKEN_EXPIRE_MS))

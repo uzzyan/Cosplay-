@@ -62,7 +62,7 @@ public class JwtInterceptor implements HandlerInterceptor {
         // 判断是否需要登录
         boolean requireLogin = (authority == null) || (authority.value() != AuthorityType.noRequire);
 
-        //验证是否有token
+        // 验证是否有token
         if(!StringUtils.hasLength(token)){
             if (requireLogin) {
                 throw new ServiceException(Constants.TOKEN_ERROR, "token失效,请重新登陆");
@@ -70,30 +70,39 @@ public class JwtInterceptor implements HandlerInterceptor {
                 return true;
             }
         }
-        //通过token，将redis中的user存到threadlocal（UserHolder）
-        User user = redisTemplate.opsForValue().get(RedisConstants.USER_TOKEN_KEY + token);
 
-        if(user == null){
-            if (requireLogin) {
-                throw new ServiceException(Constants.TOKEN_ERROR, "token失效,请重新登陆");
-            } else {
-                return true;
-            }
-        }
-        UserHolder.saveUser(user);
-        //重置过期时间
-        redisTemplate.expire(RedisConstants.USER_TOKEN_KEY +token, RedisConstants.USER_TOKEN_TTL, TimeUnit.MINUTES);
-        //验证token
+        // Fix1: 优先直接验证 JWT 签名和过期时间，不依赖 Redis
         JWTVerifier jwtVerifier = JWT.require(Algorithm.HMAC256(TokenUtils.getJwtSecret())).build();
         try {
             jwtVerifier.verify(token);
-        }catch (JWTVerificationException e){
+        } catch (JWTVerificationException e) {
             if (requireLogin) {
                 throw new ServiceException(Constants.TOKEN_ERROR, "token验证失败，请重新登陆");
             } else {
                 return true;
             }
         }
+
+        // JWT 有效：尝试从 Redis 缓存取用户，缓存失效则查数据库并重建缓存
+        User user = redisTemplate.opsForValue().get(RedisConstants.USER_TOKEN_KEY + token);
+        if (user == null) {
+            String userId = JWT.decode(token).getAudience().get(0);
+            user = userService.getById(Long.parseLong(userId));
+            if (user == null) {
+                if (requireLogin) {
+                    throw new ServiceException(Constants.TOKEN_ERROR, "用户不存在");
+                } else {
+                    return true;
+                }
+            }
+            // 重建 Redis 缓存
+            redisTemplate.opsForValue().set(RedisConstants.USER_TOKEN_KEY + token, user);
+            redisTemplate.expire(RedisConstants.USER_TOKEN_KEY + token, RedisConstants.USER_TOKEN_TTL, TimeUnit.MINUTES);
+        } else {
+            // 缓存命中，续期
+            redisTemplate.expire(RedisConstants.USER_TOKEN_KEY + token, RedisConstants.USER_TOKEN_TTL, TimeUnit.MINUTES);
+        }
+        UserHolder.saveUser(user);
         return true;
     }
 

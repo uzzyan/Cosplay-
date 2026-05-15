@@ -127,9 +127,10 @@
             <el-table :data="detail" background-color="black">
                 <el-table-column label="图片" width="150">
                     <template #default="scope">
+                        <!-- Fix2: imgs 可能是 JSON 数组字符串，取第一张展示 -->
                         <img
                             v-if="scope.row"
-                            :src="baseApi + scope.row.imgs"
+                            :src="baseApi + getFirstImg(scope.row.imgs)"
                             min-width="100"
                             height="100"
                         />
@@ -286,6 +287,17 @@ const showDetail = (row) => {
     ElMessage.error('加载失败，请检查网络连接')
     detail.value = []
   })
+}
+
+// Fix2: 解析 imgs 字段，imgs 可能是 JSON 数组字符串，取第一张
+const getFirstImg = (imgs) => {
+  if (!imgs) return ''
+  try {
+    const arr = JSON.parse(imgs)
+    return Array.isArray(arr) ? arr[0] : imgs
+  } catch {
+    return imgs
+  }
 }
 
 //发货

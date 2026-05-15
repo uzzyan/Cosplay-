@@ -8,7 +8,7 @@
         <result property="price" column="price"></result>
         <result property="discount" column="discount"></result>
         <result property="standard" column="standard"></result>
-        <result property="img" column="imgs"></result>
+        <result property="imgs" column="imgs"></result>
     </resultMap>
     <select id="selectByUserId" parameterType="int" resultType="java.util.HashMap">
         SELECT o.*, og.good_id,good.`name` as good_name, og.count, og.standard, good.imgs

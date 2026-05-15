@@ -16,19 +16,16 @@
     <el-dropdown style="margin-right: 40px;cursor: pointer">
     <span class="el-dropdown-link">
       <div style="display: inline-block;font-size: 22px;font-weight: 600;">
-        <img :src="baseApi + user.avatarUrl" class="avatar">
+        <img v-if="user && user.avatarUrl" :src="baseApi + user.avatarUrl" class="avatar" @error="onImgError">
+        <el-icon v-else class="avatar-icon"><UserFilled /></el-icon>
           {{user.nickname }}
       <i class="el-icon-arrow-down el-icon--right" style="margin-right: 15px"></i>
       </div>
     </span>
       <template #dropdown>
         <el-dropdown-menu style="text-align: center">
-          <el-dropdown-item>
-            <div @click="router.push('/manage/person')">个人信息</div>
-          </el-dropdown-item>
-          <el-dropdown-item>
-            <div @click="logout">退出</div>
-          </el-dropdown-item>
+          <el-dropdown-item @click="router.push('/manage/person')">个人信息</el-dropdown-item>
+          <el-dropdown-item @click="logout">退出</el-dropdown-item>
         </el-dropdown-menu>
       </template>
     </el-dropdown>
@@ -40,6 +37,7 @@
 import { ref, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { UserFilled } from '@element-plus/icons-vue'
 import { useStore } from 'vuex'
 
 const store = useStore()
@@ -67,6 +65,11 @@ const back = () => {
   router.go(-1)
 }
 
+// 头像加载失败时隐藏破图，表现为默认图标
+ const onImgError = (e) => {
+  e.target.style.display = 'none'
+}
+
 watch(
   () => route,
   () => {
@@ -87,5 +90,11 @@ onMounted(() => {
   position: relative;
   top: 10px;
   right: 5px;
+}
+.avatar-icon {
+  font-size: 36px;
+  margin-right: 8px;
+  vertical-align: middle;
+  color: #909399;
 }
 </style>

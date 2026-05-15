@@ -19,7 +19,7 @@ public interface OrderMapper extends BaseMapper<Order> {
     @Update("update t_order set state = '已收货' where order_no = #{orderNo}")
     boolean receiveOrder(String orderNo);
 
-    Map<String, Object> selectByOrderNo(String orderNo);
+    List<Map<String, Object>> selectByOrderNo(String orderNo);
 
     List<Map<String, Object>> selectExport(@Param("orderNo") String orderNo, @Param("state") String state);
 }

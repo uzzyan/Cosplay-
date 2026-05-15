@@ -113,53 +113,62 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
         // 1. 更改数据库订单状态为已支付
         orderMapper.payOrder(orderNo);
         
-        // 2. 获取订单详情用于库存和销量处理
-        Map<String, Object> orderMap = orderMapper.selectByOrderNo(orderNo);
-        int count = (int) orderMap.get("count");
-        Object goodIdObj = orderMap.get("goodId");
-        Long goodId = null;
-        
-        // ID 类型转换与校验
-        if(goodIdObj instanceof Long) {
-            goodId = (Long) goodIdObj;
-        } else if(goodIdObj != null) {
-            try {
-                goodId = Long.parseLong(goodIdObj.toString());
-            } catch (NumberFormatException e) {
-                throw new ServiceException(Constants.CODE_500, "商品ID不正确");
-            }
+        // 2. 获取订单详情（可能含多件商品）
+        List<Map<String, Object>> orderItems = orderMapper.selectByOrderNo(orderNo);
+        if (orderItems == null || orderItems.isEmpty()) {
+            throw new ServiceException(Constants.CODE_500, "订单商品信息不存在");
         }
 
-        if(goodId == null) {
-            throw new ServiceException(Constants.CODE_500, "商品ID不存在");
-        }
-        Good dbGood = goodMapper.selectById(goodId);
-        if (dbGood == null || Boolean.TRUE.equals(dbGood.getIsDelete()) || (dbGood.getStatus() != null && dbGood.getStatus() == 0)) {
-            throw new ServiceException(Constants.CODE_500, "商品已下架");
-        }
-        
-        String standard = (String) orderMap.get("standard");
-        
-        // 3. 校验并扣减库存 (Deduct Stock)
-        int rows = standardMapper.deductStore(goodId, standard, count);
-        if (rows == 0) {
-            throw new ServiceException(Constants.CODE_500, "库存不足");
-        }
-
-        // 4. 增加商品销量和销售额 (Update Sales)
+        // 4. 取订单总价（只需查一次）
         LambdaQueryWrapper<Order> orderLambdaQueryWrapper = new LambdaQueryWrapper<>();
         orderLambdaQueryWrapper.eq(Order::getOrderNo, orderNo);
         Order one = getOne(orderLambdaQueryWrapper);
         BigDecimal totalPrice = one.getTotalPrice();
-        goodMapper.saleGood(goodId, count, totalPrice);
 
-        // 5. 同步更新 Redis 缓存中的销量数据
-        String redisKey = GOOD_TOKEN_KEY + goodId;
-        ValueOperations<String, Good> valueOperations = redisTemplate.opsForValue();
-        Good good = valueOperations.get(redisKey);
-        if(!ObjectUtils.isEmpty(good)) {
-            good.setSales(good.getSales() + count);
-            valueOperations.set(redisKey, good);
+        // 3. 遍历所有商品，逐一校验并扣减库存、更新销量
+        for (Map<String, Object> orderMap : orderItems) {
+            int count = (int) orderMap.get("count");
+            Object goodIdObj = orderMap.get("goodId");
+            Long goodId = null;
+            
+            // ID 类型转换与校验
+            if(goodIdObj instanceof Long) {
+                goodId = (Long) goodIdObj;
+            } else if(goodIdObj != null) {
+                try {
+                    goodId = Long.parseLong(goodIdObj.toString());
+                } catch (NumberFormatException e) {
+                    throw new ServiceException(Constants.CODE_500, "商品ID不正确");
+                }
+            }
+
+            if(goodId == null) {
+                throw new ServiceException(Constants.CODE_500, "商品ID不存在");
+            }
+            Good dbGood = goodMapper.selectById(goodId);
+            if (dbGood == null || Boolean.TRUE.equals(dbGood.getIsDelete()) || (dbGood.getStatus() != null && dbGood.getStatus() == 0)) {
+                throw new ServiceException(Constants.CODE_500, "商品已下架");
+            }
+            
+            String standard = (String) orderMap.get("standard");
+            
+            // 扣减库存
+            int rows = standardMapper.deductStore(goodId, standard, count);
+            if (rows == 0) {
+                throw new ServiceException(Constants.CODE_500, "库存不足：" + dbGood.getName());
+            }
+
+            // 增加商品销量和销售额
+            goodMapper.saleGood(goodId, count, totalPrice);
+
+            // 同步更新 Redis 缓存中的销量数据
+            String redisKey = GOOD_TOKEN_KEY + goodId;
+            ValueOperations<String, Good> valueOperations = redisTemplate.opsForValue();
+            Good good = valueOperations.get(redisKey);
+            if(!ObjectUtils.isEmpty(good)) {
+                good.setSales(good.getSales() + count);
+                valueOperations.set(redisKey, good);
+            }
         }
     }
 
@@ -167,7 +176,7 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
         return orderMapper.selectByUserId(userId);
     }
 
-    public Map<String, Object> selectByOrderNo(String orderNo) {
+    public List<Map<String, Object>> selectByOrderNo(String orderNo) {
         return orderMapper.selectByOrderNo(orderNo);
     }
 

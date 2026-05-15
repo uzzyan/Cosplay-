@@ -30,10 +30,21 @@ module.exports = defineConfig({
       '/login': {
         target: 'http://localhost:9191',
         changeOrigin: true,
+        bypass: function(req) {
+          // GET 请求（浏览器刷新）交由 historyApiFallback 处理，避免500
+          if (req.method === 'GET') {
+            return '/index.html'
+          }
+        }
       },
       '/register': {
         target: 'http://localhost:9191',
         changeOrigin: true,
+        bypass: function(req) {
+          if (req.method === 'GET') {
+            return '/index.html'
+          }
+        }
       },
       '/userid': {
         target: 'http://localhost:9191',
